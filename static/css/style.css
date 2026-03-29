@@ -539,6 +539,10 @@ textarea { resize: vertical; min-height: 70px; }
 .btn-schema-annotate { border-color: #FF0000 !important; color: #cc0000 !important; }
 .btn-schema-annotate:hover { background: #fff0f0 !important; }
 
+@media (max-width: 768px) {
+  .json-buttons { display: none; }
+}
+
 /* ─── Schema Grid Editor (Sectie 6) ─────────────────────────────────────────── */
 .schema-controls {
   display: flex;

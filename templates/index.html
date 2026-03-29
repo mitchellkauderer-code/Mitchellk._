@@ -445,12 +445,14 @@
   <!-- Action bar -->
   <div id="action-bar">
     <div class="action-left">
-      <button type="button" id="btn-save-json" class="btn-secondary" onclick="saveFormJSON()">
-        💾 Opslaan als JSON
-      </button>
-      <button type="button" id="btn-load-json" class="btn-secondary" onclick="document.getElementById('file-json-input').click()">
-        📂 Laden van JSON
-      </button>
+      <div class="json-buttons">
+        <button type="button" id="btn-save-json" class="btn-secondary" onclick="saveFormJSON()">
+          💾 Opslaan als JSON
+        </button>
+        <button type="button" id="btn-load-json" class="btn-secondary" onclick="document.getElementById('file-json-input').click()">
+          📂 Laden van JSON
+        </button>
+      </div>
       <input type="file" id="file-json-input" accept=".json" style="display:none" onchange="loadFormJSON(this)">
     </div>
     <div class="action-right">

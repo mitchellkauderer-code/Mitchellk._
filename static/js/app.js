@@ -771,6 +771,23 @@ class PhotoAnnotator {
     this.canvas.addEventListener('mouseup',   e => this._onMouseUp(e));
     this.canvas.addEventListener('dblclick',  e => this._onDblClick(e));
     document.addEventListener('keydown', this._keyHandler = e => this._onKeyDown(e));
+
+    // Touch support
+    this.canvas.addEventListener('touchstart', e => {
+      e.preventDefault();
+      const t = e.touches[0];
+      this.canvas.dispatchEvent(new MouseEvent('mousedown', { clientX: t.clientX, clientY: t.clientY }));
+    }, { passive: false });
+    this.canvas.addEventListener('touchmove', e => {
+      e.preventDefault();
+      const t = e.touches[0];
+      this.canvas.dispatchEvent(new MouseEvent('mousemove', { clientX: t.clientX, clientY: t.clientY }));
+    }, { passive: false });
+    this.canvas.addEventListener('touchend', e => {
+      e.preventDefault();
+      const t = e.changedTouches[0];
+      this.canvas.dispatchEvent(new MouseEvent('mouseup', { clientX: t.clientX, clientY: t.clientY }));
+    }, { passive: false });
   }
 
   _loadImage() {
