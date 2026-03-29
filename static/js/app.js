@@ -321,6 +321,7 @@ function restoreFormData(data) {
   setVal('s1-hoogte',        s1.geschatte_hoogte);
   setVal('s1-bewoners',      s1.bewoners_afhankelijk);
   setVal('s1-vve',           s1.contact_vve_naam);
+  _syncEntityLabel();
   setVal('s1-contact',       s1.contact_persoon_beheer);
   setVal('s1-functie',       s1.functie);
   setVal('s1-telefoon',      s1.telefoon);
@@ -566,6 +567,16 @@ function schemaRemoveCol() {
 // Initial render
 renderSchemaGrid();
 
+/* ─── Entity label sync ──────────────────────────────────────────────────────── */
+function _syncEntityLabel() {
+  const vveInput = document.getElementById('s1-vve');
+  const label    = document.getElementById('entity-type-label');
+  if (!label) return;
+  label.textContent = (vveInput && vveInput.value.trim()) || 'VvE';
+}
+const _vveInput = document.getElementById('s1-vve');
+if (_vveInput) _vveInput.addEventListener('input', _syncEntityLabel);
+
 /* ─── Save / Load JSON ───────────────────────────────────────────────────────── */
 
 function saveFormJSON() {
@@ -694,6 +705,7 @@ class PhotoAnnotator {
     this.ctx          = null;
     this._textInputEl = null;
     this._keyHandler  = null;
+    this._undoStack   = [];
   }
 
   open() {
@@ -734,6 +746,7 @@ class PhotoAnnotator {
     this.containerEl.innerHTML = `
       <div class="annot-toolbar">
         ${toolBtns}
+        <button class="annot-tool-btn annot-undo-btn" disabled>&#8617; Ongedaan</button>
         <button class="annot-tool-btn annot-clear-btn">Alles wissen</button>
         <button class="annot-action-btn annot-save-btn">Opslaan</button>
         <button class="annot-action-btn annot-close-btn">Sluiten</button>
@@ -756,12 +769,15 @@ class PhotoAnnotator {
       });
     });
 
+    this.containerEl.querySelector('.annot-undo-btn').addEventListener('click', () => this._undo());
     this.containerEl.querySelector('.annot-clear-btn').addEventListener('click', () => {
       this.annotations = [];
       this.selectedIdx = -1;
       this.nextBoxNum  = 1;
+      this._undoStack  = [];
       this._dismissTextInput();
       this._redraw();
+      this._updateUndoBtn();
     });
     this.containerEl.querySelector('.annot-save-btn').addEventListener('click', () => this._save());
     this.containerEl.querySelector('.annot-close-btn').addEventListener('click', () => this.close());
@@ -972,6 +988,7 @@ class PhotoAnnotator {
 
     // Place box (click, not drag)
     if (this.activeTool === 'box') {
+      this._pushUndo();
       const bw = 60, bh = 40;
       const ann = {type:'box', x:x-bw/2, y:y-bh/2, w:bw, h:bh, num:String(this.nextBoxNum++)};
       this.annotations.push(ann);
@@ -982,6 +999,7 @@ class PhotoAnnotator {
     }
     // Place textbox (click, not drag)
     if (this.activeTool === 'textbox') {
+      this._pushUndo();
       const tw = 120, th = 40;
       const ann = {type:'textbox', x:x-tw/2, y:y-th/2, w:tw, h:th, text:''};
       this.annotations.push(ann);
@@ -1040,7 +1058,7 @@ class PhotoAnnotator {
       const valid = (ann.type === 'arrow' || ann.type === 'line')
         ? Math.hypot(ann.x2-ann.x1, ann.y2-ann.y1) > 8
         : (ann.w > 8 && ann.h > 8);
-      if (valid) { this.annotations.push(ann); this.selectedIdx = this.annotations.length - 1; }
+      if (valid) { this._pushUndo(); this.annotations.push(ann); this.selectedIdx = this.annotations.length - 1; }
       this.drawCurrent = null;
       this._redraw();
     }
@@ -1058,10 +1076,16 @@ class PhotoAnnotator {
 
   _onKeyDown(e) {
     if (!this.canvas || this._textInputEl) return;
+    if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+      e.preventDefault();
+      this._undo();
+      return;
+    }
     if (e.key === 'Delete' || e.key === 'Backspace') {
       const ae = document.activeElement;
       if (!ae || ae === document.body || ae === this.canvas) {
         if (this.selectedIdx >= 0) {
+          this._pushUndo();
           this.annotations.splice(this.selectedIdx, 1);
           this.selectedIdx = -1;
           this._redraw();
@@ -1069,6 +1093,25 @@ class PhotoAnnotator {
         }
       }
     }
+  }
+
+  _pushUndo() {
+    this._undoStack.push(JSON.parse(JSON.stringify(this.annotations)));
+    if (this._undoStack.length > 20) this._undoStack.shift();
+    this._updateUndoBtn();
+  }
+
+  _undo() {
+    if (this._undoStack.length === 0) return;
+    this.annotations = this._undoStack.pop();
+    this.selectedIdx = -1;
+    this._redraw();
+    this._updateUndoBtn();
+  }
+
+  _updateUndoBtn() {
+    const btn = this.containerEl && this.containerEl.querySelector('.annot-undo-btn');
+    if (btn) btn.disabled = this._undoStack.length === 0;
   }
 
   _makeDrawAnn(x1, y1, x2, y2) {

@@ -815,8 +815,9 @@ def build_s9(doc, data):
     sig_cell(0, 1, '________________________________')
 
     # Row 1: role labels
+    entity_label = s1.get('contact_vve_naam', '').strip() or 'VvE'
     sig_cell(1, 0, 'Aannemer', bold=True, size=10)
-    sig_cell(1, 1, 'VvE', bold=True, size=10)
+    sig_cell(1, 1, entity_label, bold=True, size=10)
 
     # Row 2: "Naam ondergetekende:"
     sig_cell(2, 0, 'Naam ondergetekende:', size=10)
