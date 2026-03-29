@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plaatsingsdocument Generator</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<div id="app">
+  <header>
+    <h1>Plaatsingsdocument Generator</h1>
+    <p class="subtitle">Glasvezel plaatsingsdocument aanmaken</p>
+  </header>
+
+  <!-- Tab bar -->
+  <nav id="tab-bar">
+    <button class="tab-btn active" data-tab="cover">Cover</button>
+    <button class="tab-btn" data-tab="s1">Sectie 1</button>
+    <button class="tab-btn" data-tab="s2">Sectie 2</button>
+    <button class="tab-btn" data-tab="s3">Sectie 3</button>
+    <button class="tab-btn" data-tab="s4">Sectie 4</button>
+    <button class="tab-btn" data-tab="s5">Sectie 5</button>
+    <button class="tab-btn" data-tab="s6">Sectie 6</button>
+    <button class="tab-btn" data-tab="s7">Sectie 7</button>
+    <button class="tab-btn fixed-tab" data-tab="s8">Sectie 8</button>
+    <button class="tab-btn fixed-tab" data-tab="s9">Sectie 9</button>
+  </nav>
+
+  <main>
+
+    <!-- ═══ COVER ═══ -->
+    <div id="tab-cover" class="tab-panel active">
+      <h2>Cover pagina</h2>
+
+      <div class="form-group">
+        <label>Vooraanzicht foto</label>
+        <div class="photo-slot" id="slot-cover-foto">
+          <input type="file" accept="image/*" class="file-input">
+          <input type="hidden" class="photo-ref" id="ref-cover-foto">
+          <div class="thumb-preview"></div>
+          <span class="upload-hint">Klik om foto te uploaden</span>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="cover-bag">BAG Pand ID('s)</label>
+          <input type="text" id="cover-bag" placeholder="BAG pand ID">
+        </div>
+        <div class="form-group">
+          <label for="cover-straat">Straat + huisnrs</label>
+          <input type="text" id="cover-straat" placeholder="Spuistraat 285">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="cover-postcode">Postcode + Plaats</label>
+          <input type="text" id="cover-postcode" placeholder="1012 VT Amsterdam">
+        </div>
+        <div class="form-group">
+          <label for="cover-ap">AP-gebied</label>
+          <input type="text" id="cover-ap" placeholder="AP-gebied">
+        </div>
+      </div>
+
+      <div class="form-group half">
+        <label for="cover-datum">Datum schouw</label>
+        <input type="date" id="cover-datum">
+      </div>
+
+      <div class="fixed-info">
+        <p><strong>Vaste velden (automatisch ingevuld):</strong> Installatiecode: Plaatsingsdocument--- &nbsp;|&nbsp; Projectnr: 14246 &nbsp;|&nbsp; Doc. opgesteld door: B Sayilir &nbsp;|&nbsp; Naam schouwer: Bayram</p>
+      </div>
+    </div>
+
+    <!-- ═══ SECTIE 1 ═══ -->
+    <div id="tab-s1" class="tab-panel">
+      <h2>Sectie 1: Locatie en installatiegegevens</h2>
+
+      <h3>Algemeen</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="s1-datum-survey">Datum site survey</label>
+          <input type="date" id="s1-datum-survey">
+        </div>
+        <div class="form-group">
+          <label for="s1-gvb">Glasvezelvoorbereider</label>
+          <input type="text" id="s1-gvb" placeholder="Naam voorbereider">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="s1-tel">Tel. nr</label>
+          <input type="text" id="s1-tel" placeholder="06-...">
+        </div>
+        <div class="form-group">
+          <label for="s1-aansluitingen">Aantal aansluitingen</label>
+          <input type="number" id="s1-aansluitingen" min="0">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="s1-verdiepingen">Aantal verdiepingen</label>
+          <input type="number" id="s1-verdiepingen" min="0">
+        </div>
+        <div class="form-group">
+          <label for="s1-hoogte">Geschatte hoogte van de site</label>
+          <input type="text" id="s1-hoogte" placeholder="bijv. 12 meter">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="s1-bewoners">Bewoners afhankelijk van elkaar?</label>
+          <select id="s1-bewoners">
+            <option value="">— kies —</option>
+            <option value="Ja">Ja</option>
+            <option value="Nee">Nee</option>
+          </select>
+        </div>
+      </div>
+
+      <h3>Aantal woningen per etage</h3>
+      <div class="etage-table-wrapper">
+        <table class="etage-tbl">
+          <thead>
+            <tr>
+              <th>KD</th><th>BG</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>11</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><input type="number" min="0" class="etage-input" data-etage="KD" placeholder="0"></td>
+              <td><input type="number" min="0" class="etage-input" data-etage="BG" placeholder="0"></td>
+              <td><input type="number" min="0" class="etage-input" data-etage="1" placeholder="0"></td>
+              <td><input type="number" min="0" class="etage-input" data-etage="2" placeholder="0"></td>
+              <td><input type="number" min="0" class="etage-input" data-etage="3" placeholder="0"></td>
+              <td><input type="number" min="0" class="etage-input" data-etage="4" placeholder="0"></td>
+              <td><input type="number" min="0" class="etage-input" data-etage="5" placeholder="0"></td>
+              <td><input type="number" min="0" class="etage-input" data-etage="6" placeholder="0"></td>
+              <td><input type="number" min="0" class="etage-input" data-etage="7" placeholder="0"></td>
+              <td><input type="number" min="0" class="etage-input" data-etage="8" placeholder="0"></td>
+              <td><input type="number" min="0" class="etage-input" data-etage="9" placeholder="0"></td>
+              <td><input type="number" min="0" class="etage-input" data-etage="10" placeholder="0"></td>
+              <td><input type="number" min="0" class="etage-input" data-etage="11" placeholder="0"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Contactinformatie</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="s1-vve">VVE/WOCO/VGE</label>
+          <input type="text" id="s1-vve" placeholder="Naam VvE / beheerder">
+        </div>
+        <div class="form-group">
+          <label for="s1-contact">Contactpersoon beheer <span class="tip">*Wordt hergebruikt in Sectie 9</span></label>
+          <input type="text" id="s1-contact" placeholder="Naam contactpersoon">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="s1-functie">Functie</label>
+          <input type="text" id="s1-functie">
+        </div>
+        <div class="form-group">
+          <label for="s1-telefoon">Telefoon</label>
+          <input type="text" id="s1-telefoon">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="s1-mobiel">Mobiel</label>
+          <input type="text" id="s1-mobiel">
+        </div>
+        <div class="form-group">
+          <label for="s1-email">Emailadres</label>
+          <input type="email" id="s1-email">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="s1-eigenaren">Meerdere eigenaren</label>
+          <input type="text" id="s1-eigenaren">
+        </div>
+        <div class="form-group">
+          <label for="s1-gevestigd">Gevestigd te</label>
+          <input type="text" id="s1-gevestigd">
+        </div>
+      </div>
+      <div class="form-group half">
+        <label for="s1-toegang">Toegang site via</label>
+        <input type="text" id="s1-toegang">
+      </div>
+
+      <h3>Aanwezigen tijdens survey</h3>
+      <div id="container-aanwezigen">
+        <div class="dynamic-row aanwezige-row">
+          <div class="form-row" style="margin-bottom:0">
+            <div class="form-group">
+              <label>Naam</label>
+              <input type="text" class="aanwezige-naam" placeholder="Naam">
+            </div>
+            <div class="form-group">
+              <label>Telefoonnummer</label>
+              <input type="text" class="aanwezige-tel" placeholder="Telefoonnummer">
+            </div>
+          </div>
+          <button type="button" class="btn-remove-row" onclick="this.closest('.dynamic-row').remove()">✕</button>
+        </div>
+      </div>
+      <button type="button" class="btn-add" onclick="addAanwezige()">+ Persoon toevoegen</button>
+
+      <h3>Installatiegegevens</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="s1-invoerpunt">Locatie in- of opvoerpunt</label>
+          <input type="text" id="s1-invoerpunt">
+        </div>
+        <div class="form-group">
+          <label for="s1-invoergaten">Aantal invoergaten nodig</label>
+          <input type="text" id="s1-invoergaten">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="s1-stijgpunt">Stijgpunt</label>
+          <input type="text" id="s1-stijgpunt">
+        </div>
+        <div class="form-group">
+          <label for="s1-mantelbuis">Mantelbuis of koof toegankelijk?</label>
+          <select id="s1-mantelbuis">
+            <option value="">— kies —</option>
+            <option value="Ja">Ja</option>
+            <option value="Nee">Nee</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="s1-doorvoer">Bestaande doorvoer gebruiken?</label>
+          <select id="s1-doorvoer">
+            <option value="">— kies —</option>
+            <option value="Ja">Ja</option>
+            <option value="Nee">Nee</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="s1-gvap">Locatie glasvezelaansluitpunt</label>
+          <input type="text" id="s1-gvap">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="s1-cai">Locatie CAI AOP</label>
+          <input type="text" id="s1-cai">
+        </div>
+        <div class="form-group">
+          <label for="s1-isra">Locatie ISRA</label>
+          <input type="text" id="s1-isra">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="s1-meterkast">Locatie meterkast</label>
+          <input type="text" id="s1-meterkast">
+        </div>
+        <div class="form-group">
+          <label for="s1-volt">230V aanwezig?</label>
+          <select id="s1-volt">
+            <option value="">— kies —</option>
+            <option value="Ja">Ja</option>
+            <option value="Nee">Nee</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="s1-hoofdafsluiters">Locatie hoofdafsluiters</label>
+          <input type="text" id="s1-hoofdafsluiters">
+        </div>
+        <div class="form-group">
+          <label for="s1-modem">Locatie Modem</label>
+          <input type="text" id="s1-modem">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="s1-ftu">Locatie FTU</label>
+          <input type="text" id="s1-ftu">
+        </div>
+        <div class="form-group">
+          <label for="s1-brand">Brandwerende afdichting aanwezig</label>
+          <select id="s1-brand">
+            <option value="">— kies —</option>
+            <option value="Ja">Ja</option>
+            <option value="Nee">Nee</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SECTIE 2 ═══ -->
+    <div id="tab-s2" class="tab-panel">
+      <h2>Sectie 2: Locatie</h2>
+
+      <div class="form-group">
+        <label>Kaartafbeelding (locatie complex)</label>
+        <div class="photo-slot" id="slot-s2-foto">
+          <input type="file" accept="image/*" class="file-input">
+          <input type="hidden" class="photo-ref" id="ref-s2-foto">
+          <div class="thumb-preview"></div>
+          <span class="upload-hint">Klik om kaartafbeelding te uploaden</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="s2-tekst">Tekst onder de foto</label>
+        <textarea id="s2-tekst" rows="3" placeholder="Beschrijving locatie..."></textarea>
+      </div>
+    </div>
+
+    <!-- ═══ SECTIE 3 ═══ -->
+    <div id="tab-s3" class="tab-panel">
+      <h2>Sectie 3: Beslisboom</h2>
+
+      <div class="fixed-info">
+        <p>De beslisboom afbeelding is altijd vast (<strong>static/beslisboom.png</strong>) en wordt automatisch ingevoegd. Sla de beslisboom op in de <code>static/</code> map als dat nog niet gedaan is.</p>
+      </div>
+
+      <div class="form-group">
+        <label for="s3-uitleg">Uitleg keuze beslisboom door aannemer</label>
+        <textarea id="s3-uitleg" rows="4" placeholder="Uitleg..."></textarea>
+      </div>
+    </div>
+
+    <!-- ═══ SECTIE 4 ═══ -->
+    <div id="tab-s4" class="tab-panel">
+      <h2>Sectie 4: Aanzicht complex eenheden</h2>
+
+      <div class="form-group">
+        <label>Aanzicht foto</label>
+        <div class="photo-slot" id="slot-s4-foto">
+          <input type="file" accept="image/*" class="file-input">
+          <input type="hidden" class="photo-ref" id="ref-s4-foto">
+          <div class="thumb-preview"></div>
+          <span class="upload-hint">Klik om foto te uploaden</span>
+        </div>
+      </div>
+
+      <div class="form-group half">
+        <label for="s4-caption">Bijschrift (caption)</label>
+        <input type="text" id="s4-caption" placeholder="bijv. Voor-aanzicht">
+      </div>
+    </div>
+
+    <!-- ═══ SECTIE 5 ═══ -->
+    <div id="tab-s5" class="tab-panel">
+      <h2>Sectie 5: Beschrijving tracé en kabelroute</h2>
+
+      <h3>A. Tracé routes (buiten)</h3>
+      <div id="container-buiten"></div>
+      <button type="button" class="btn-add" onclick="addPhotoRow('container-buiten', 'tpl-photo-row')">+ Foto toevoegen</button>
+
+      <h3 style="margin-top:2rem">B. Route inpandig</h3>
+      <div id="container-inpandig"></div>
+      <button type="button" class="btn-add" onclick="addPhotoRow('container-inpandig', 'tpl-photo-row')">+ Foto toevoegen</button>
+    </div>
+
+    <!-- ═══ SECTIE 6 ═══ -->
+    <div id="tab-s6" class="tab-panel">
+      <h2>Sectie 6: Schematische tekening</h2>
+
+      <div class="schema-controls">
+        <button type="button" class="btn-schema" onclick="schemaAddFloor()">+ Verdieping toevoegen</button>
+        <button type="button" class="btn-schema" onclick="schemaAddCol()">+ Kolom toevoegen</button>
+        <button type="button" class="btn-schema btn-schema-remove" onclick="schemaRemoveFloor()">&#8722; Verdieping verwijderen</button>
+        <button type="button" class="btn-schema btn-schema-remove" onclick="schemaRemoveCol()">&#8722; Kolom verwijderen</button>
+        <button type="button" class="btn-schema btn-schema-annotate" onclick="openSchemaAnnotator()">&#9998; Annoteren</button>
+      </div>
+
+      <div id="schema-annot-status"></div>
+
+      <div class="schema-editor" id="schema-editor">
+        <!-- rendered by renderSchemaGrid() -->
+      </div>
+
+      <div class="annot-editor-container" id="schema-annot-editor" style="display:none"></div>
+    </div>
+
+    <!-- ═══ SECTIE 7 ═══ -->
+    <div id="tab-s7" class="tab-panel">
+      <h2>Sectie 7: Beschrijving aanleg</h2>
+
+      <div class="fixed-info">
+        <p>De beschrijving aanleg tekst is volledig vast. Alleen de Strenglijsten tabel is aanpasbaar.</p>
+      </div>
+
+      <h3>Strenglijsten</h3>
+      <p class="field-hint">Geschatte in- of opvoerpunt per woning</p>
+
+      <table id="strenglijsten-table" class="strenglijsten">
+        <thead>
+          <tr>
+            <th>Adres</th>
+            <th>Hnr</th>
+            <th>Lengte</th>
+            <th>Invoer</th>
+            <th>St.p</th>
+            <th>DP</th>
+            <th>Streng ID</th>
+            <th style="width:36px"></th>
+          </tr>
+        </thead>
+        <tbody id="container-strenglijsten">
+          <!-- rows added dynamically -->
+        </tbody>
+      </table>
+      <button type="button" class="btn-add" onclick="addStrengRij()">+ Rij toevoegen</button>
+    </div>
+
+    <!-- ═══ SECTIE 8 ═══ -->
+    <div id="tab-s8" class="tab-panel">
+      <h2>Sectie 8: Materiaalstaat</h2>
+      <div class="fixed-info">
+        <p>Sectie 8 wordt volledig automatisch aangemaakt met een lege tabel. De tabel kan na generatie worden ingevuld in Word.</p>
+        <p><strong>Kolommen:</strong> Omschrijving | Aantal | Type | Huidige te gebruiken?</p>
+        <p><em>Standaard verbruiksmaterialen; Pluggen, schroeven, trekontlasting, kit, Stopaq, krimpkous, flexibele buis, tube, pur schuim, beugels en vulbusjes.</em></p>
+      </div>
+    </div>
+
+    <!-- ═══ SECTIE 9 ═══ -->
+    <div id="tab-s9" class="tab-panel">
+      <h2>Sectie 9: Overeenstemming / Ondertekening</h2>
+      <div class="fixed-info">
+        <p>Sectie 9 wordt automatisch aangemaakt. De naam van de contactpersoon beheer uit <strong>Sectie 1</strong> wordt automatisch ingevuld in het handtekeningblok rechts (VvE-zijde).</p>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Action bar -->
+  <div id="action-bar">
+    <div class="action-left">
+      <button type="button" id="btn-save-json" class="btn-secondary" onclick="saveFormJSON()">
+        💾 Opslaan als JSON
+      </button>
+      <button type="button" id="btn-load-json" class="btn-secondary" onclick="document.getElementById('file-json-input').click()">
+        📂 Laden van JSON
+      </button>
+      <input type="file" id="file-json-input" accept=".json" style="display:none" onchange="loadFormJSON(this)">
+    </div>
+    <div class="action-right">
+      <button type="button" id="btn-generate" onclick="generateDocument()">
+        Genereer Document
+      </button>
+    </div>
+  </div>
+
+  <!-- Success / error messages -->
+  <div id="success-msg" class="msg success" style="display:none">
+    ✓ Document succesvol gegenereerd en gedownload!
+  </div>
+  <div id="error-msg" class="msg error" style="display:none"></div>
+  <div id="loading-msg" class="msg loading" style="display:none">
+    ⏳ Document wordt aangemaakt...
+  </div>
+</div>
+
+<!-- ─── Hidden templates ──────────────────────────────────────────────────── -->
+
+<!-- Photo+text row template (Sectie 5) -->
+<div id="tpl-photo-row" class="dynamic-row photo-text-row" style="display:none">
+  <div class="photo-slot">
+    <input type="file" accept="image/*" class="file-input">
+    <input type="hidden" class="photo-ref">
+    <div class="thumb-preview"></div>
+    <span class="upload-hint">Klik om foto te uploaden</span>
+  </div>
+  <textarea class="row-text" rows="2" placeholder="Beschrijving..."></textarea>
+  <button type="button" class="btn-remove-row" onclick="this.closest('.dynamic-row').remove()">✕ Verwijderen</button>
+</div>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>

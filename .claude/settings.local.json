@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -m venv venv)",
+      "Bash(./venv/bin/pip install:*)",
+      "Bash(curl -s http://localhost:5000/)",
+      "Bash(curl -s -w \"%{http_code}\" http://localhost:5000/ -o /dev/null)",
+      "Bash(curl -s -w \"\\\\n%{http_code}\" http://127.0.0.1:5000/ -o /tmp/resp.html)",
+      "Read(//tmp/**)",
+      "Bash(curl -s -X POST http://127.0.0.1:5000/generate -H \"Content-Type: application/json\" -d '{\"\"cover\"\":{\"\"straat_huisnrs\"\":\"\"Teststraat 1\"\",\"\"datum_schouw\"\":\"\"2026-03-28\"\"},\"\"s1\"\":{\"\"contact_persoon_beheer\"\":\"\"J. de Vries\"\"},\"\"s2\"\":{},\"\"s3\"\":{},\"\"s4\"\":{},\"\"s5\"\":{\"\"buiten\"\":[],\"\"inpandig\"\":[]},\"\"s6\"\":{},\"\"s7\"\":{\"\"strenglijsten\"\":[{\"\"nummer\"\":\"\"1\"\",\"\"type_kabel\"\":\"\"SMF-4\"\",\"\"aantal_meters\"\":\"\"25\"\"}]},\"\"s8\"\":{},\"\"s9\"\":{}}' -o /tmp/test_output.docx -w \"%{http_code}\")",
+      "Read(//private/tmp/**)",
+      "Bash(curl -s -X POST http://127.0.0.1:5000/generate -H \"Content-Type: application/json\" -d '{:*)"
+    ]
+  }
+}
