@@ -449,34 +449,35 @@ def build_s1(doc, data):
     lbl_cell_para.paragraph_format.space_after = Pt(1)
     styled_run(lbl_cell_para, 'Aantal woningen per etage', bold=True, size=9)
 
-    etage_cols = ['KD', 'BG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
-    etage_data_keys = ['BG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
+    etage_cols      = ['KD', 'BG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
+    etage_data_keys = ['KD', 'BG', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
     etage_vals = s1.get('woningen_per_etage', {})
 
-    etage_tbl = doc.add_table(rows=2, cols=13)
+    # 14 cols: 1 empty label col + 13 etage cols
+    etage_tbl = doc.add_table(rows=2, cols=14)
     set_table_borders(etage_tbl)
-    label_w = 2.5
-    data_w = round((15.92 - label_w) / 12, 3)
-    set_col_widths(etage_tbl, [label_w] + [data_w] * 12)
+    label_w = 0.5
+    data_w  = round((15.92 - label_w) / 13, 3)
+    set_col_widths(etage_tbl, [label_w] + [data_w] * 13)
 
-    # Header row (gray, bold)
+    # Header row: col 0 = empty gray; cols 1-13 = KD, BG, 1-11
+    set_cell_shading(etage_tbl.rows[0].cells[0], 'BFBFBF')
     for i, col in enumerate(etage_cols):
-        c = etage_tbl.rows[0].cells[i]
+        c = etage_tbl.rows[0].cells[i + 1]
         set_cell_shading(c, 'BFBFBF')
         cp = c.paragraphs[0]
         cp.alignment = WD_ALIGN_PARAGRAPH.CENTER
         cp.paragraph_format.space_before = Pt(1)
-        cp.paragraph_format.space_after = Pt(1)
+        cp.paragraph_format.space_after  = Pt(1)
         styled_run(cp, col, bold=True, size=8)
 
-    # Data row: label in col 0, values in cols 1-12
+    # Data row: col 0 = empty; cols 1-13 = values
     data_row = etage_tbl.rows[1]
-    cell_para(data_row.cells[0], 'Aantal per etage', size=8)
     for i, key in enumerate(etage_data_keys):
         cp = data_row.cells[i + 1].paragraphs[0]
         cp.alignment = WD_ALIGN_PARAGRAPH.CENTER
         cp.paragraph_format.space_before = Pt(1)
-        cp.paragraph_format.space_after = Pt(1)
+        cp.paragraph_format.space_after  = Pt(1)
         styled_run(cp, etage_vals.get(key, ''), size=9)
 
     # Resume main 2-column table for remaining general fields
@@ -651,6 +652,12 @@ def build_s5(doc, data):
 
     add_photo_subsection('Tracé routes (buiten):', s5.get('buiten', []))
     add_photo_subsection('Route inpandig:', s5.get('inpandig', []))
+    add_photo_subsection('FTU locatie voorbeeld:', s5.get('ftu', []))
+
+    p_ftu = doc.add_paragraph()
+    p_ftu.paragraph_format.space_before = Pt(4)
+    p_ftu.paragraph_format.space_after  = Pt(6)
+    styled_run(p_ftu, 'Let op: aannemer en glasvezelpartij zijn niet verantwoordelijk voor het realiseren van een 230 volt voorziening.', italic=True, size=10)
 
     add_page_break(doc)
 

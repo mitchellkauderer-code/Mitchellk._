@@ -290,6 +290,15 @@ function collectFormData() {
     });
   });
 
+  // Sectie 5 FTU
+  const ftu = [];
+  document.querySelectorAll('#container-ftu .dynamic-row').forEach(row => {
+    ftu.push({
+      foto:  row.querySelector('.photo-ref')?.value || '',
+      tekst: row.querySelector('.row-text')?.value.trim() || '',
+    });
+  });
+
   // Strenglijsten
   const strenglijsten = [];
   document.querySelectorAll('#container-strenglijsten tr').forEach(tr => {
@@ -366,7 +375,7 @@ function collectFormData() {
       });
       return items;
     })() },
-    s5: { buiten, inpandig },
+    s5: { buiten, inpandig, ftu },
     s6: {
       schema: {
         floors:  [...schemaState.floors],
@@ -514,6 +523,7 @@ function restoreFormData(data) {
   const s5 = data.s5 || {};
   document.getElementById('container-buiten').innerHTML   = '';
   document.getElementById('container-inpandig').innerHTML = '';
+  document.getElementById('container-ftu').innerHTML      = '';
 
   (s5.buiten || []).forEach(item => {
     addPhotoRow('container-buiten', 'tpl-photo-row');
@@ -532,6 +542,21 @@ function restoreFormData(data) {
   (s5.inpandig || []).forEach(item => {
     addPhotoRow('container-inpandig', 'tpl-photo-row');
     const rows = document.querySelectorAll('#container-inpandig .dynamic-row');
+    const last = rows[rows.length - 1];
+    if (item.foto) {
+      last.querySelector('.photo-ref').value = item.foto;
+      last.querySelector('.thumb-preview').innerHTML = `<img src="/uploads/${item.foto}">`;
+      const _slot = last.querySelector('.photo-slot');
+      _slot.classList.add('has-image');
+      if (_slot._annotateBtn) _slot._annotateBtn.style.display = '';
+    }
+    last.querySelector('.row-text').value = item.tekst || '';
+  });
+
+  document.getElementById('container-ftu').innerHTML = '';
+  (s5.ftu || []).forEach(item => {
+    addPhotoRow('container-ftu', 'tpl-photo-row');
+    const rows = document.querySelectorAll('#container-ftu .dynamic-row');
     const last = rows[rows.length - 1];
     if (item.foto) {
       last.querySelector('.photo-ref').value = item.foto;

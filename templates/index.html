@@ -306,9 +306,8 @@
           <label for="s1-meterkast">Locatie meterkast</label>
           <select id="s1-meterkast" onchange="toggleAnders(this,'s1-meterkast-anders')">
             <option value="">— kies —</option>
-            <option value="Mtk">Mtk</option>
-            <option value="Mtk / WNK">Mtk / WNK</option>
-            <option value="WNK">WNK</option>
+            <option value="Inpandig">Inpandig</option>
+            <option value="Uitpandig">Uitpandig</option>
             <option value="Anders">Anders</option>
           </select>
           <input type="text" id="s1-meterkast-anders" class="anders-input" placeholder="Omschrijving..." style="display:none">
@@ -422,6 +421,10 @@
       <h3 style="margin-top:2rem">B. Route inpandig</h3>
       <div id="container-inpandig"></div>
       <button type="button" class="btn-add" onclick="addPhotoRow('container-inpandig', 'tpl-photo-row')">+ Foto toevoegen</button>
+
+      <h3 style="margin-top:2rem">C. FTU locatie voorbeeld</h3>
+      <div id="container-ftu"></div>
+      <button type="button" class="btn-add" onclick="addPhotoRow('container-ftu', 'tpl-photo-row')">+ Foto toevoegen</button>
     </div>
 
     <!-- ═══ SECTIE 6 ═══ -->
