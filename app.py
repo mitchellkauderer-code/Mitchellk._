@@ -58,8 +58,8 @@ def generate_schema():
     CELL    = 80
     LABEL_W = 80
 
-    # Rows rendered top-to-bottom: 1 extra empty row, then floors reversed
-    display_rows = [''] + list(reversed(floors))
+    # Rows top-to-bottom: empty header, named floors reversed, then _extra (unlabeled)
+    display_rows = [''] + list(reversed(floors)) + ['_extra']
     total_cols   = columns + 1  # +1 always-empty extra col
 
     img_w = LABEL_W + total_cols * CELL
@@ -93,12 +93,17 @@ def generate_schema():
         y = row_idx * CELL
 
         # Label cell
-        if floor_label:
+        is_named  = floor_label and floor_label != '_extra'
+        is_extra_row = floor_label == '_extra'
+        if is_named:
             draw.rectangle([0, y, LABEL_W - 1, y + CELL - 1], fill=GRAY, outline=BORDER)
             bbox = draw.textbbox((0, 0), floor_label, font=font_bold)
             tw = bbox[2] - bbox[0]
             th = bbox[3] - bbox[1]
             draw.text((LABEL_W - 10 - tw, y + (CELL - th) // 2), floor_label, font=font_bold, fill='#333333')
+        elif is_extra_row:
+            # unlabeled row: gray cell, no text
+            draw.rectangle([0, y, LABEL_W - 1, y + CELL - 1], fill=GRAY, outline=BORDER)
         else:
             draw.rectangle([0, y, LABEL_W - 1, y + CELL - 1], fill='white', outline=BORDER)
 
@@ -107,7 +112,7 @@ def generate_schema():
             x = LABEL_W + col_idx * CELL
             draw.rectangle([x, y, x + CELL - 1, y + CELL - 1], fill='white', outline=BORDER)
 
-            if floor_label and col_idx < columns:
+            if (is_named or is_extra_row) and col_idx < columns:
                 value = cells.get(f'{floor_label}-{col_idx}', '')
                 if value:
                     bbox = draw.textbbox((0, 0), value, font=font)
