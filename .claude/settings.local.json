@@ -10,7 +10,8 @@
       "Bash(curl -s -X POST http://127.0.0.1:5000/generate -H \"Content-Type: application/json\" -d '{\"\"cover\"\":{\"\"straat_huisnrs\"\":\"\"Teststraat 1\"\",\"\"datum_schouw\"\":\"\"2026-03-28\"\"},\"\"s1\"\":{\"\"contact_persoon_beheer\"\":\"\"J. de Vries\"\"},\"\"s2\"\":{},\"\"s3\"\":{},\"\"s4\"\":{},\"\"s5\"\":{\"\"buiten\"\":[],\"\"inpandig\"\":[]},\"\"s6\"\":{},\"\"s7\"\":{\"\"strenglijsten\"\":[{\"\"nummer\"\":\"\"1\"\",\"\"type_kabel\"\":\"\"SMF-4\"\",\"\"aantal_meters\"\":\"\"25\"\"}]},\"\"s8\"\":{},\"\"s9\"\":{}}' -o /tmp/test_output.docx -w \"%{http_code}\")",
       "Read(//private/tmp/**)",
       "Bash(curl -s -X POST http://127.0.0.1:5000/generate -H \"Content-Type: application/json\" -d '{:*)",
-      "Bash(node -e \"const fs=require\\(''fs''\\); const src=fs.readFileSync\\(''static/js/app.js'',''utf8''\\); new Function\\(src\\); console.log\\(''JS syntax OK''\\)\")"
+      "Bash(node -e \"const fs=require\\(''fs''\\); const src=fs.readFileSync\\(''static/js/app.js'',''utf8''\\); new Function\\(src\\); console.log\\(''JS syntax OK''\\)\")",
+      "Bash(./venv/bin/python -c \"import py_compile; py_compile.compile\\(''app.py'', doraise=True\\); print\\(''Python syntax OK''\\)\")"
     ]
   }
 }

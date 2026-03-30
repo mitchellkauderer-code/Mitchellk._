@@ -201,9 +201,32 @@ def add_page_break(doc):
     run = para.add_run()
     run.add_break(WD_BREAK.PAGE)
 
+def _compress_image(image_path):
+    """Resize to max 1920px longest side and return a JPEG BytesIO."""
+    MAX = 1920
+    with Image.open(image_path) as img:
+        img = img.convert('RGB')
+        w, h = img.size
+        if max(w, h) > MAX:
+            if w >= h:
+                img = img.resize((MAX, round(h * MAX / w)), Image.LANCZOS)
+            else:
+                img = img.resize((round(w * MAX / h), MAX), Image.LANCZOS)
+        buf = io.BytesIO()
+        img.save(buf, format='JPEG', quality=75, optimize=True)
+        buf.seek(0)
+        return buf
+
 def add_centered_image(doc, image_path, width_cm, max_height_cm=None):
     if not image_path or not os.path.exists(image_path):
         return
+
+    static_dir = os.path.join(BASE_DIR, 'static')
+    if image_path.startswith(static_dir):
+        img_src = image_path          # static asset — use path directly
+    else:
+        img_src = _compress_image(image_path)   # user upload — compress
+
     para = doc.add_paragraph()
     para.alignment = WD_ALIGN_PARAGRAPH.CENTER
     para.paragraph_format.space_before = Pt(6)
@@ -211,18 +234,28 @@ def add_centered_image(doc, image_path, width_cm, max_height_cm=None):
     run = para.add_run()
     if max_height_cm:
         try:
-            with Image.open(image_path) as img:
-                w_px, h_px = img.size
+            if isinstance(img_src, io.BytesIO):
+                img_src.seek(0)
+                with Image.open(img_src) as pil_img:
+                    w_px, h_px = pil_img.size
+                img_src.seek(0)
+            else:
+                with Image.open(img_src) as pil_img:
+                    w_px, h_px = pil_img.size
             aspect = w_px / h_px
             h_at_max_w = width_cm / aspect
             if h_at_max_w <= max_height_cm:
-                run.add_picture(image_path, width=Cm(width_cm))
+                run.add_picture(img_src, width=Cm(width_cm))
             else:
-                run.add_picture(image_path, height=Cm(max_height_cm))
+                if isinstance(img_src, io.BytesIO):
+                    img_src.seek(0)
+                run.add_picture(img_src, height=Cm(max_height_cm))
         except Exception:
-            run.add_picture(image_path, width=Cm(width_cm))
+            if isinstance(img_src, io.BytesIO):
+                img_src.seek(0)
+            run.add_picture(img_src, width=Cm(width_cm))
     else:
-        run.add_picture(image_path, width=Cm(width_cm))
+        run.add_picture(img_src, width=Cm(width_cm))
 
 def photo_path(filename):
     if not filename:
