@@ -8,7 +8,7 @@ from docx.shared import Cm, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_BREAK
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
@@ -205,6 +205,7 @@ def _compress_image(image_path):
     """Resize to max 1920px longest side and return a JPEG BytesIO."""
     MAX = 1920
     with Image.open(image_path) as img:
+        img = ImageOps.exif_transpose(img)
         img = img.convert('RGB')
         w, h = img.size
         if max(w, h) > MAX:
