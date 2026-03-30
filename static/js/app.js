@@ -130,6 +130,58 @@ function recalcStrengIDs() {
   });
 }
 
+function _strengNavInputs(tr) {
+  return Array.from(tr.querySelectorAll('input:not([tabindex="-1"])'));
+}
+
+function _strengNavKey(e) {
+  const tbody   = document.getElementById('container-strenglijsten');
+  const rows    = Array.from(tbody.querySelectorAll('tr'));
+  const rowEl   = e.target.closest('tr');
+  const rowIdx  = rows.indexOf(rowEl);
+  const cols    = _strengNavInputs(rowEl);
+  const colIdx  = cols.indexOf(e.target);
+
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    if (e.shiftKey) {
+      if (colIdx > 0) {
+        cols[colIdx - 1].focus();
+      } else if (rowIdx > 0) {
+        const prev = _strengNavInputs(rows[rowIdx - 1]);
+        prev[prev.length - 1].focus();
+      }
+    } else {
+      if (colIdx < cols.length - 1) {
+        cols[colIdx + 1].focus();
+      } else if (rowIdx < rows.length - 1) {
+        _strengNavInputs(rows[rowIdx + 1])[0].focus();
+      } else {
+        addStrengRij();
+        const newRows = Array.from(tbody.querySelectorAll('tr'));
+        _strengNavInputs(newRows[newRows.length - 1])[0].focus();
+      }
+    }
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (rowIdx < rows.length - 1) {
+      _strengNavInputs(rows[rowIdx + 1])[colIdx]?.focus();
+    } else {
+      addStrengRij();
+      const newRows = Array.from(tbody.querySelectorAll('tr'));
+      _strengNavInputs(newRows[newRows.length - 1])[colIdx]?.focus();
+    }
+  } else if (e.key === 'ArrowRight') {
+    if (colIdx < cols.length - 1) { e.preventDefault(); cols[colIdx + 1].focus(); }
+  } else if (e.key === 'ArrowLeft') {
+    if (colIdx > 0) { e.preventDefault(); cols[colIdx - 1].focus(); }
+  } else if (e.key === 'ArrowUp') {
+    if (rowIdx > 0) { e.preventDefault(); _strengNavInputs(rows[rowIdx - 1])[colIdx]?.focus(); }
+  } else if (e.key === 'ArrowDown') {
+    if (rowIdx < rows.length - 1) { e.preventDefault(); _strengNavInputs(rows[rowIdx + 1])[colIdx]?.focus(); }
+  }
+}
+
 function addStrengRij() {
   const tbody = document.getElementById('container-strenglijsten');
   const tr = document.createElement('tr');
@@ -146,6 +198,7 @@ function addStrengRij() {
   tr.querySelector('.btn-remove-streng').addEventListener('click', () => { tr.remove(); recalcStrengIDs(); });
   tr.querySelector('.streng-dp').addEventListener('input', recalcStrengIDs);
   tr.querySelector('.streng-stp').addEventListener('input', recalcStrengIDs);
+  _strengNavInputs(tr).forEach(inp => inp.addEventListener('keydown', _strengNavKey));
   tbody.appendChild(tr);
   recalcStrengIDs();
 }
