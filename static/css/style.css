@@ -651,3 +651,16 @@ textarea { resize: vertical; min-height: 70px; }
   padding: 2px;
   border-radius: 2px;
 }
+
+/* ─── Anders free-text inputs ────────────────────────────────────────────────── */
+.anders-input {
+  margin-top: 6px;
+  width: 100%;
+}
+
+/* ─── DP-gebied readonly ─────────────────────────────────────────────────────── */
+#cover-dp-gebied[readonly] {
+  background: #f0f4f8;
+  color: #555;
+  cursor: default;
+}

@@ -199,6 +199,9 @@ function addStrengRij() {
   tr.querySelector('.streng-dp').addEventListener('input', recalcStrengIDs);
   tr.querySelector('.streng-stp').addEventListener('input', recalcStrengIDs);
   _strengNavInputs(tr).forEach(inp => inp.addEventListener('keydown', _strengNavKey));
+  // Pre-fill DP with current ODP nummer
+  const odp = (document.getElementById('cover-odp')?.value || '').trim();
+  if (odp) tr.querySelector('.streng-dp').value = odp;
   tbody.appendChild(tr);
   recalcStrengIDs();
 }
@@ -276,6 +279,8 @@ function collectFormData() {
       straat_huisnrs:    val('cover-straat'),
       postcode_plaats:   val('cover-postcode'),
       ap_gebied:         val('cover-ap'),
+      odp_nummer:        val('cover-odp'),
+      dp_gebied:         val('cover-dp-gebied'),
       datum_schouw:      val('cover-datum'),
     },
     s1: {
@@ -299,17 +304,17 @@ function collectFormData() {
       aanwezigen:              aanwezigen,
       locatie_invoerpunt:      val('s1-invoerpunt'),
       aantal_invoergaten:      val('s1-invoergaten'),
-      stijgpunt:               val('s1-stijgpunt'),
+      stijgpunt:               valAnders('s1-stijgpunt', 's1-stijgpunt-anders'),
       mantelbuis_toegankelijk: val('s1-mantelbuis'),
       bestaande_doorvoer:      val('s1-doorvoer'),
-      locatie_gvap:            val('s1-gvap'),
-      locatie_cai_aop:         val('s1-cai'),
-      locatie_isra:            val('s1-isra'),
-      locatie_meterkast:       val('s1-meterkast'),
+      locatie_gvap:            valAnders('s1-gvap', 's1-gvap-anders'),
+      locatie_cai_aop:         valAnders('s1-cai', 's1-cai-anders'),
+      locatie_isra:            valAnders('s1-isra', 's1-isra-anders'),
+      locatie_meterkast:       valAnders('s1-meterkast', 's1-meterkast-anders'),
       volt_aanwezig:           val('s1-volt'),
-      locatie_hoofdafsluiters: val('s1-hoofdafsluiters'),
-      locatie_modem:           val('s1-modem'),
-      locatie_ftu:             val('s1-ftu'),
+      locatie_hoofdafsluiters: valAnders('s1-hoofdafsluiters', 's1-hoofdafsluiters-anders'),
+      locatie_modem:           valAnders('s1-modem', 's1-modem-anders'),
+      locatie_ftu:             valAnders('s1-ftu', 's1-ftu-anders'),
       brandwerende_afdichting: val('s1-brand'),
     },
     s2: {
@@ -321,7 +326,7 @@ function collectFormData() {
     },
     s4: {
       foto_aanzicht: photoRef('ref-s4-foto'),
-      caption:       val('s4-caption'),
+      caption:       valAnders('s4-caption', 's4-caption-anders'),
     },
     s5: { buiten, inpandig },
     s6: {
@@ -358,14 +363,18 @@ function restorePhotoSlot(refId, slotId, filename) {
 
 function restoreFormData(data) {
   const c = data.cover || {};
-  setVal('cover-bag',    c.bag_pand_id);
-  setVal('cover-straat', c.straat_huisnrs);
+  setVal('cover-bag',      c.bag_pand_id);
+  setVal('cover-straat',   c.straat_huisnrs);
   setVal('cover-postcode', c.postcode_plaats);
-  setVal('cover-ap',     c.ap_gebied);
-  setVal('cover-datum',  c.datum_schouw);
+  setVal('cover-ap',       c.ap_gebied);
+  setVal('cover-odp',      c.odp_nummer);
+  setVal('cover-datum',    c.datum_schouw);
+  _syncDpGebied();
   restorePhotoSlot('ref-cover-foto', 'slot-cover-foto', c.foto_vooraanzicht);
 
   const s1 = data.s1 || {};
+  const _surveyEl = document.getElementById('s1-datum-survey');
+  if (_surveyEl) delete _surveyEl.dataset.manualOverride;
   setVal('s1-datum-survey',  s1.datum_site_survey);
   setVal('s1-gvb',           s1.glasvezelvoorbereider);
   setVal('s1-tel',           s1.tel_nr);
@@ -385,17 +394,17 @@ function restoreFormData(data) {
   setVal('s1-toegang',       s1.toegang_site_via);
   setVal('s1-invoerpunt',    s1.locatie_invoerpunt);
   setVal('s1-invoergaten',   s1.aantal_invoergaten);
-  setVal('s1-stijgpunt',     s1.stijgpunt);
+  restoreAnders('s1-stijgpunt',        's1-stijgpunt-anders',        s1.stijgpunt);
   setVal('s1-mantelbuis',    s1.mantelbuis_toegankelijk);
   setVal('s1-doorvoer',      s1.bestaande_doorvoer);
-  setVal('s1-gvap',          s1.locatie_gvap);
-  setVal('s1-cai',           s1.locatie_cai_aop);
-  setVal('s1-isra',          s1.locatie_isra);
-  setVal('s1-meterkast',     s1.locatie_meterkast);
+  restoreAnders('s1-gvap',             's1-gvap-anders',             s1.locatie_gvap);
+  restoreAnders('s1-cai',              's1-cai-anders',              s1.locatie_cai_aop);
+  restoreAnders('s1-isra',             's1-isra-anders',             s1.locatie_isra);
+  restoreAnders('s1-meterkast',        's1-meterkast-anders',        s1.locatie_meterkast);
   setVal('s1-volt',          s1.volt_aanwezig);
-  setVal('s1-hoofdafsluiters', s1.locatie_hoofdafsluiters);
-  setVal('s1-modem',         s1.locatie_modem);
-  setVal('s1-ftu',           s1.locatie_ftu);
+  restoreAnders('s1-hoofdafsluiters',  's1-hoofdafsluiters-anders',  s1.locatie_hoofdafsluiters);
+  restoreAnders('s1-modem',            's1-modem-anders',            s1.locatie_modem);
+  restoreAnders('s1-ftu',              's1-ftu-anders',              s1.locatie_ftu);
   setVal('s1-brand',         s1.brandwerende_afdichting);
 
   // Etage grid
@@ -435,7 +444,7 @@ function restoreFormData(data) {
   setVal('s3-uitleg', s3.uitleg_beslisboom);
 
   const s4 = data.s4 || {};
-  setVal('s4-caption', s4.caption);
+  restoreAnders('s4-caption', 's4-caption-anders', s4.caption);
   restorePhotoSlot('ref-s4-foto', 'slot-s4-foto', s4.foto_aanzicht);
 
   // Sectie 5
@@ -629,6 +638,69 @@ function _syncEntityLabel() {
 }
 const _vveInput = document.getElementById('s1-vve');
 if (_vveInput) _vveInput.addEventListener('input', _syncEntityLabel);
+
+/* ─── Anders dropdown helper ─────────────────────────────────────────────────── */
+function toggleAnders(selectEl, andersId) {
+  const inp = document.getElementById(andersId);
+  if (!inp) return;
+  inp.style.display = selectEl.value === 'Anders' ? '' : 'none';
+  if (selectEl.value !== 'Anders') inp.value = '';
+}
+
+// Read effective value: if dropdown is "Anders", return the free-text input
+function valAnders(selectId, andersId) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return '';
+  if (sel.value === 'Anders') {
+    const inp = document.getElementById(andersId);
+    return inp ? inp.value.trim() : '';
+  }
+  return sel.value;
+}
+
+// Restore a dropdown+anders pair from a saved value
+function restoreAnders(selectId, andersId, value) {
+  const sel = document.getElementById(selectId);
+  if (!sel || value === undefined || value === null) return;
+  // Check if value matches one of the fixed options
+  const fixed = Array.from(sel.options).map(o => o.value).filter(v => v && v !== 'Anders');
+  if (fixed.includes(value)) {
+    sel.value = value;
+  } else if (value !== '') {
+    sel.value = 'Anders';
+    const inp = document.getElementById(andersId);
+    if (inp) { inp.value = value; inp.style.display = ''; }
+  }
+}
+
+/* ─── DP-gebied + ODP auto-fill ──────────────────────────────────────────────── */
+function _syncDpGebied() {
+  const ap  = (document.getElementById('cover-ap')?.value  || '').trim();
+  const odp = (document.getElementById('cover-odp')?.value || '').trim();
+  const dp  = document.getElementById('cover-dp-gebied');
+  if (dp) dp.value = (ap && odp) ? `${ap}-ODP${odp}` : (ap ? ap : '');
+}
+
+function _syncOdpToStreng() {
+  const odp = (document.getElementById('cover-odp')?.value || '').trim();
+  document.querySelectorAll('#container-strenglijsten .streng-dp').forEach(inp => {
+    inp.value = odp;
+  });
+  recalcStrengIDs();
+}
+
+document.getElementById('cover-ap')?.addEventListener('input',  _syncDpGebied);
+document.getElementById('cover-odp')?.addEventListener('input', () => { _syncDpGebied(); _syncOdpToStreng(); });
+
+/* ─── Datum schouw → Datum site survey sync ──────────────────────────────────── */
+document.getElementById('cover-datum')?.addEventListener('change', e => {
+  const survey = document.getElementById('s1-datum-survey');
+  if (survey && !survey.dataset.manualOverride) survey.value = e.target.value;
+});
+document.getElementById('s1-datum-survey')?.addEventListener('change', e => {
+  const cover = document.getElementById('cover-datum');
+  if (cover && e.target.value !== cover.value) e.target.dataset.manualOverride = '1';
+});
 
 /* ─── Save / Load JSON ───────────────────────────────────────────────────────── */
 

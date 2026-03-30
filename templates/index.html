@@ -66,6 +66,17 @@
         </div>
       </div>
 
+      <div class="form-row">
+        <div class="form-group">
+          <label for="cover-odp">ODP nummer</label>
+          <input type="text" id="cover-odp" placeholder="004">
+        </div>
+        <div class="form-group">
+          <label for="cover-dp-gebied">DP-gebied</label>
+          <input type="text" id="cover-dp-gebied" readonly placeholder="auto">
+        </div>
+      </div>
+
       <div class="form-group half">
         <label for="cover-datum">Datum schouw</label>
         <input type="date" id="cover-datum">
@@ -228,7 +239,13 @@
       <div class="form-row">
         <div class="form-group">
           <label for="s1-stijgpunt">Stijgpunt</label>
-          <input type="text" id="s1-stijgpunt">
+          <select id="s1-stijgpunt" onchange="toggleAnders(this,'s1-stijgpunt-anders')">
+            <option value="">— kies —</option>
+            <option value="Binnendoor">Binnendoor</option>
+            <option value="Buitenlangs">Buitenlangs</option>
+            <option value="Anders">Anders</option>
+          </select>
+          <input type="text" id="s1-stijgpunt-anders" class="anders-input" placeholder="Omschrijving..." style="display:none">
         </div>
         <div class="form-group">
           <label for="s1-mantelbuis">Mantelbuis of koof toegankelijk?</label>
@@ -250,23 +267,51 @@
         </div>
         <div class="form-group">
           <label for="s1-gvap">Locatie glasvezelaansluitpunt</label>
-          <input type="text" id="s1-gvap">
+          <select id="s1-gvap" onchange="toggleAnders(this,'s1-gvap-anders')">
+            <option value="">— kies —</option>
+            <option value="Mtk">Mtk</option>
+            <option value="Mtk / WNK">Mtk / WNK</option>
+            <option value="WNK">WNK</option>
+            <option value="Anders">Anders</option>
+          </select>
+          <input type="text" id="s1-gvap-anders" class="anders-input" placeholder="Omschrijving..." style="display:none">
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
           <label for="s1-cai">Locatie CAI AOP</label>
-          <input type="text" id="s1-cai">
+          <select id="s1-cai" onchange="toggleAnders(this,'s1-cai-anders')">
+            <option value="">— kies —</option>
+            <option value="Mtk">Mtk</option>
+            <option value="Mtk / WNK">Mtk / WNK</option>
+            <option value="WNK">WNK</option>
+            <option value="Anders">Anders</option>
+          </select>
+          <input type="text" id="s1-cai-anders" class="anders-input" placeholder="Omschrijving..." style="display:none">
         </div>
         <div class="form-group">
           <label for="s1-isra">Locatie ISRA</label>
-          <input type="text" id="s1-isra">
+          <select id="s1-isra" onchange="toggleAnders(this,'s1-isra-anders')">
+            <option value="">— kies —</option>
+            <option value="Mtk">Mtk</option>
+            <option value="Mtk / WNK">Mtk / WNK</option>
+            <option value="WNK">WNK</option>
+            <option value="Anders">Anders</option>
+          </select>
+          <input type="text" id="s1-isra-anders" class="anders-input" placeholder="Omschrijving..." style="display:none">
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
           <label for="s1-meterkast">Locatie meterkast</label>
-          <input type="text" id="s1-meterkast">
+          <select id="s1-meterkast" onchange="toggleAnders(this,'s1-meterkast-anders')">
+            <option value="">— kies —</option>
+            <option value="Mtk">Mtk</option>
+            <option value="Mtk / WNK">Mtk / WNK</option>
+            <option value="WNK">WNK</option>
+            <option value="Anders">Anders</option>
+          </select>
+          <input type="text" id="s1-meterkast-anders" class="anders-input" placeholder="Omschrijving..." style="display:none">
         </div>
         <div class="form-group">
           <label for="s1-volt">230V aanwezig?</label>
@@ -280,17 +325,38 @@
       <div class="form-row">
         <div class="form-group">
           <label for="s1-hoofdafsluiters">Locatie hoofdafsluiters</label>
-          <input type="text" id="s1-hoofdafsluiters">
+          <select id="s1-hoofdafsluiters" onchange="toggleAnders(this,'s1-hoofdafsluiters-anders')">
+            <option value="">— kies —</option>
+            <option value="Mtk">Mtk</option>
+            <option value="Mtk / WNK">Mtk / WNK</option>
+            <option value="WNK">WNK</option>
+            <option value="Anders">Anders</option>
+          </select>
+          <input type="text" id="s1-hoofdafsluiters-anders" class="anders-input" placeholder="Omschrijving..." style="display:none">
         </div>
         <div class="form-group">
           <label for="s1-modem">Locatie Modem</label>
-          <input type="text" id="s1-modem">
+          <select id="s1-modem" onchange="toggleAnders(this,'s1-modem-anders')">
+            <option value="">— kies —</option>
+            <option value="Mtk">Mtk</option>
+            <option value="Mtk / WNK">Mtk / WNK</option>
+            <option value="WNK">WNK</option>
+            <option value="Anders">Anders</option>
+          </select>
+          <input type="text" id="s1-modem-anders" class="anders-input" placeholder="Omschrijving..." style="display:none">
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
           <label for="s1-ftu">Locatie FTU</label>
-          <input type="text" id="s1-ftu">
+          <select id="s1-ftu" onchange="toggleAnders(this,'s1-ftu-anders')">
+            <option value="">— kies —</option>
+            <option value="Mtk">Mtk</option>
+            <option value="Mtk / WNK">Mtk / WNK</option>
+            <option value="WNK">WNK</option>
+            <option value="Anders">Anders</option>
+          </select>
+          <input type="text" id="s1-ftu-anders" class="anders-input" placeholder="Omschrijving..." style="display:none">
         </div>
         <div class="form-group">
           <label for="s1-brand">Brandwerende afdichting aanwezig</label>
@@ -353,7 +419,14 @@
 
       <div class="form-group half">
         <label for="s4-caption">Bijschrift (caption)</label>
-        <input type="text" id="s4-caption" placeholder="bijv. Voor-aanzicht">
+        <select id="s4-caption" onchange="toggleAnders(this,'s4-caption-anders')">
+          <option value="">— kies —</option>
+          <option value="Voor-aanzicht">Voor-aanzicht</option>
+          <option value="Zij-aanzicht">Zij-aanzicht</option>
+          <option value="Achter-aanzicht">Achter-aanzicht</option>
+          <option value="Anders">Anders</option>
+        </select>
+        <input type="text" id="s4-caption-anders" class="anders-input" placeholder="Omschrijving..." style="display:none">
       </div>
     </div>
 
