@@ -363,7 +363,6 @@ def build_cover(doc, data):
     add_row('BAG Pand ID:', cover.get('bag_pand_id', ''))
     add_row('Postcode + Plaats:', cover.get('postcode_plaats', ''))
     add_row('AP-gebied:', cover.get('ap_gebied', ''))
-    add_row('ODP nummer:', cover.get('odp_nummer', ''))
     add_row('DP-gebied:', cover.get('dp_gebied', ''))
     add_row('Datum schouw:', cover.get('datum_schouw', ''))
     add_row('Aannemer:', cover.get('aannemer', ''))
