@@ -407,27 +407,8 @@
     <div id="tab-s4" class="tab-panel">
       <h2>Sectie 4: Aanzicht complex eenheden</h2>
 
-      <div class="form-group">
-        <label>Aanzicht foto</label>
-        <div class="photo-slot" id="slot-s4-foto">
-          <input type="file" accept="image/*" class="file-input">
-          <input type="hidden" class="photo-ref" id="ref-s4-foto">
-          <div class="thumb-preview"></div>
-          <span class="upload-hint">Klik om foto te uploaden</span>
-        </div>
-      </div>
-
-      <div class="form-group half">
-        <label for="s4-caption">Bijschrift (caption)</label>
-        <select id="s4-caption" onchange="toggleAnders(this,'s4-caption-anders')">
-          <option value="">— kies —</option>
-          <option value="Voor-aanzicht">Voor-aanzicht</option>
-          <option value="Zij-aanzicht">Zij-aanzicht</option>
-          <option value="Achter-aanzicht">Achter-aanzicht</option>
-          <option value="Anders">Anders</option>
-        </select>
-        <input type="text" id="s4-caption-anders" class="anders-input" placeholder="Omschrijving..." style="display:none">
-      </div>
+      <div id="container-s4"></div>
+      <button type="button" class="btn-add" onclick="addS4Row()">+ Foto toevoegen</button>
     </div>
 
     <!-- ═══ SECTIE 5 ═══ -->
@@ -546,6 +527,28 @@
 </div>
 
 <!-- ─── Hidden templates ──────────────────────────────────────────────────── -->
+
+<!-- Photo+caption row template (Sectie 4) -->
+<div id="tpl-s4-row" class="dynamic-row photo-text-row" style="display:none">
+  <div class="photo-slot">
+    <input type="file" accept="image/*" class="file-input">
+    <input type="hidden" class="photo-ref">
+    <div class="thumb-preview"></div>
+    <span class="upload-hint">Klik om foto te uploaden</span>
+  </div>
+  <div class="form-group" style="margin-top:8px">
+    <label>Bijschrift (caption)</label>
+    <select class="s4-caption-sel" onchange="toggleAnders(this, null, this.nextElementSibling)">
+      <option value="">— kies —</option>
+      <option value="Voor-aanzicht">Voor-aanzicht</option>
+      <option value="Zij-aanzicht">Zij-aanzicht</option>
+      <option value="Achter-aanzicht">Achter-aanzicht</option>
+      <option value="Anders">Anders</option>
+    </select>
+    <input type="text" class="s4-caption-anders anders-input" placeholder="Omschrijving..." style="display:none">
+  </div>
+  <button type="button" class="btn-remove-row" onclick="removeS4Row(this)">✕ Verwijderen</button>
+</div>
 
 <!-- Photo+text row template (Sectie 5) -->
 <div id="tpl-photo-row" class="dynamic-row photo-text-row" style="display:none">

@@ -13,7 +13,8 @@
       "Bash(node -e \"const fs=require\\(''fs''\\); const src=fs.readFileSync\\(''static/js/app.js'',''utf8''\\); new Function\\(src\\); console.log\\(''JS syntax OK''\\)\")",
       "Bash(./venv/bin/python -c \"import py_compile; py_compile.compile\\(''app.py'', doraise=True\\); print\\(''Python syntax OK''\\)\")",
       "Bash(node -e \"const fs=require\\(''fs''\\); new Function\\(fs.readFileSync\\(''static/js/app.js'',''utf8''\\)\\); console.log\\(''JS OK''\\)\")",
-      "Bash(./venv/bin/python -c \"import py_compile; py_compile.compile\\(''app.py'', doraise=True\\); print\\(''OK''\\)\")"
+      "Bash(./venv/bin/python -c \"import py_compile; py_compile.compile\\(''app.py'', doraise=True\\); print\\(''OK''\\)\")",
+      "Bash(./venv/bin/python -c \"import py_compile; py_compile.compile\\(''app.py'', doraise=True\\); print\\(''Python OK''\\)\")"
     ]
   }
 }

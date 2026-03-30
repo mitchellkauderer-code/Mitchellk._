@@ -604,16 +604,22 @@ def build_s4(doc, data):
     s4 = data.get('s4', {})
     add_section_heading(doc, 4, 'Aanzicht complex eenheden')
 
-    img = photo_path(s4.get('foto_aanzicht'))
-    add_centered_image(doc, img, 12, max_height_cm=8) if img else None
+    fotos = s4.get('fotos', [])
+    # backwards-compat: single foto_aanzicht key
+    if not fotos and s4.get('foto_aanzicht'):
+        fotos = [{'foto': s4['foto_aanzicht'], 'caption': s4.get('caption', '')}]
 
-    caption = s4.get('caption', '')
-    if caption:
-        p = doc.add_paragraph()
-        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p.paragraph_format.space_before = Pt(2)
-        p.paragraph_format.space_after = Pt(6)
-        styled_run(p, caption, italic=True, size=9)
+    for item in fotos:
+        img = photo_path(item.get('foto'))
+        if img:
+            add_centered_image(doc, img, 12, max_height_cm=8)
+        caption = item.get('caption', '')
+        if caption:
+            p = doc.add_paragraph()
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p.paragraph_format.space_before = Pt(2)
+            p.paragraph_format.space_after = Pt(6)
+            styled_run(p, caption, italic=True, size=9)
 
     add_page_break(doc)
 

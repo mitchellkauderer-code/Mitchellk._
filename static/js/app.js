@@ -91,6 +91,38 @@ function addPhotoRow(containerId, templateId) {
   container.appendChild(clone);
 }
 
+/* ─── Dynamic: Sectie 4 photo+caption rows ──────────────────────────────────── */
+
+function addS4Row() {
+  const container = document.getElementById('container-s4');
+  const template  = document.getElementById('tpl-s4-row');
+  const clone = template.cloneNode(true);
+  clone.removeAttribute('id');
+  clone.style.display = '';
+  initPhotoSlot(clone.querySelector('.photo-slot'));
+  container.appendChild(clone);
+}
+
+function removeS4Row(btn) {
+  const container = document.getElementById('container-s4');
+  const rows = container.querySelectorAll('.dynamic-row');
+  if (rows.length <= 1) return; // keep at least 1
+  btn.closest('.dynamic-row').remove();
+}
+
+// helper: get effective caption value from a s4 row
+function _s4Caption(row) {
+  const sel = row.querySelector('.s4-caption-sel');
+  if (!sel) return '';
+  if (sel.value === 'Anders') {
+    return (row.querySelector('.s4-caption-anders')?.value || '').trim();
+  }
+  return sel.value;
+}
+
+// Add initial row on page load
+addS4Row();
+
 /* ─── Dynamic: aanwezigen (Sectie 1) ────────────────────────────────────────── */
 
 function addAanwezige() {
@@ -324,10 +356,16 @@ function collectFormData() {
     s3: {
       uitleg_beslisboom: val('s3-uitleg'),
     },
-    s4: {
-      foto_aanzicht: photoRef('ref-s4-foto'),
-      caption:       valAnders('s4-caption', 's4-caption-anders'),
-    },
+    s4: { fotos: (() => {
+      const items = [];
+      document.querySelectorAll('#container-s4 .dynamic-row').forEach(row => {
+        items.push({
+          foto:    row.querySelector('.photo-ref')?.value || '',
+          caption: _s4Caption(row),
+        });
+      });
+      return items;
+    })() },
     s5: { buiten, inpandig },
     s6: {
       schema: {
@@ -444,8 +482,33 @@ function restoreFormData(data) {
   setVal('s3-uitleg', s3.uitleg_beslisboom);
 
   const s4 = data.s4 || {};
-  restoreAnders('s4-caption', 's4-caption-anders', s4.caption);
-  restorePhotoSlot('ref-s4-foto', 'slot-s4-foto', s4.foto_aanzicht);
+  const s4Container = document.getElementById('container-s4');
+  s4Container.innerHTML = '';
+  const s4Fotos = s4.fotos && s4.fotos.length ? s4.fotos : [{ foto: '', caption: '' }];
+  s4Fotos.forEach(item => {
+    addS4Row();
+    const rows = s4Container.querySelectorAll('.dynamic-row');
+    const last = rows[rows.length - 1];
+    if (item.foto) {
+      last.querySelector('.photo-ref').value = item.foto;
+      last.querySelector('.thumb-preview').innerHTML = `<img src="/uploads/${item.foto}">`;
+      const _slot = last.querySelector('.photo-slot');
+      _slot.classList.add('has-image');
+      if (_slot._annotateBtn) _slot._annotateBtn.style.display = '';
+    }
+    // Restore caption dropdown+anders
+    const sel = last.querySelector('.s4-caption-sel');
+    const andersInp = last.querySelector('.s4-caption-anders');
+    if (sel && item.caption) {
+      const fixed = ['Voor-aanzicht', 'Zij-aanzicht', 'Achter-aanzicht'];
+      if (fixed.includes(item.caption)) {
+        sel.value = item.caption;
+      } else {
+        sel.value = 'Anders';
+        if (andersInp) { andersInp.value = item.caption; andersInp.style.display = ''; }
+      }
+    }
+  });
 
   // Sectie 5
   const s5 = data.s5 || {};
@@ -527,6 +590,8 @@ let schemaState = {
   columns: 2,
   cells:   {},
 };
+// '_extra' is always the bottom-most floor row; rendered with no label
+const SCHEMA_FIXED_BOTTOM = '_extra';
 
 let schemaAnnotatedImage = null; // set when user annotates the schema PNG
 
@@ -534,24 +599,27 @@ function renderSchemaGrid() {
   const editor = document.getElementById('schema-editor');
   if (!editor) return;
 
-  // Render top-to-bottom: 1 extra empty row, then floors reversed
-  const displayRows = ['', ...[...schemaState.floors].reverse()];
+  // top-to-bottom: empty header row, named floors (reversed), then _extra (no label)
+  const displayRows = ['', ...[...schemaState.floors].reverse(), SCHEMA_FIXED_BOTTOM];
   const totalCols   = schemaState.columns + 1; // +1 always-empty extra col
 
   let html = '<div class="schema-grid">';
   for (const rowLabel of displayRows) {
+    const isHeaderRow = rowLabel === '';
+    const isExtraRow  = rowLabel === SCHEMA_FIXED_BOTTOM;
+    const displayLabel = isExtraRow ? '' : rowLabel; // show blank for _extra row
     html += '<div class="schema-row">';
-    html += `<div class="schema-label">${esc(rowLabel)}</div>`;
+    html += `<div class="schema-label">${esc(displayLabel)}</div>`;
     for (let c = 0; c < totalCols; c++) {
-      const isExtra = !rowLabel || c >= schemaState.columns;
-      const key = `${rowLabel}-${c}`;
-      const cellVal = isExtra ? '' : (schemaState.cells[key] || '');
-      const extraAttr = isExtra ? ' data-extra="true"' : '';
+      const isExtraCol = isHeaderRow || c >= schemaState.columns;
+      const key      = `${rowLabel}-${c}`;
+      const cellVal  = isExtraCol ? '' : (schemaState.cells[key] || '');
+      const extraAttr = isExtraCol ? ' data-extra="true"' : '';
       const hasVal    = cellVal ? ' has-value' : '';
-      html += `<div class="schema-cell${hasVal}"${extraAttr} data-key="${esc(key)}" onclick="schemaCellClick(this,'${esc(key)}',${isExtra})">`;
+      html += `<div class="schema-cell${hasVal}"${extraAttr} data-key="${esc(key)}" onclick="schemaCellClick(this,'${esc(key)}',${isExtraCol})">`;
       if (cellVal) {
         html += `<span class="cell-value">${esc(cellVal)}</span>`;
-      } else if (!isExtra) {
+      } else if (!isExtraCol) {
         html += `<span class="cell-add">+</span>`;
       }
       html += '</div>';
@@ -601,8 +669,11 @@ function schemaAddFloor() {
 }
 
 function schemaRemoveFloor() {
-  if (schemaState.floors.length <= 2) return; // min = KD + BG
+  // Keep at least KD + BG (2 floors); top named floor can be removed if empty
+  if (schemaState.floors.length <= 2) return;
   const top      = schemaState.floors[schemaState.floors.length - 1];
+  // Protect fixed bottom floors
+  if (top === 'KD' || top === 'BG') return;
   const hasCells = Object.keys(schemaState.cells).some(k => k.startsWith(top + '-'));
   if (hasCells) { showMsg('error', '✗ Verwijder eerst alle woningnummers op de bovenste verdieping.'); return; }
   schemaState.floors.pop();
@@ -640,8 +711,9 @@ const _vveInput = document.getElementById('s1-vve');
 if (_vveInput) _vveInput.addEventListener('input', _syncEntityLabel);
 
 /* ─── Anders dropdown helper ─────────────────────────────────────────────────── */
-function toggleAnders(selectEl, andersId) {
-  const inp = document.getElementById(andersId);
+// andersRef can be an ID string or a direct element (for templated rows without IDs)
+function toggleAnders(selectEl, andersRef, directEl) {
+  const inp = directEl || (andersRef ? document.getElementById(andersRef) : null);
   if (!inp) return;
   inp.style.display = selectEl.value === 'Anders' ? '' : 'none';
   if (selectEl.value !== 'Anders') inp.value = '';
@@ -691,6 +763,32 @@ function _syncOdpToStreng() {
 
 document.getElementById('cover-ap')?.addEventListener('input',  _syncDpGebied);
 document.getElementById('cover-odp')?.addEventListener('input', () => { _syncDpGebied(); _syncOdpToStreng(); });
+
+/* ─── Postcode lookup (PDOK) ─────────────────────────────────────────────────── */
+let _postcodeTimer = null;
+function _lookupPostcode() {
+  const straat   = (document.getElementById('cover-straat')?.value || '').trim();
+  const postcode = document.getElementById('cover-postcode');
+  if (!straat || !postcode || postcode.value.trim()) return; // skip if already filled
+  clearTimeout(_postcodeTimer);
+  _postcodeTimer = setTimeout(async () => {
+    try {
+      const url = `https://api.pdok.nl/bzk/locatieserver/search/v3_1/free?q=${encodeURIComponent(straat + ' Amsterdam')}&fq=gemeentenaam:amsterdam&rows=1`;
+      const res  = await fetch(url);
+      if (!res.ok) return;
+      const json = await res.json();
+      const doc  = json?.response?.docs?.[0];
+      if (doc?.postcode) {
+        postcode.value = `${doc.postcode} Amsterdam`;
+      }
+    } catch { /* ignore network errors */ }
+  }, 1000);
+}
+document.getElementById('cover-straat')?.addEventListener('input', _lookupPostcode);
+document.getElementById('cover-straat')?.addEventListener('blur',  () => {
+  clearTimeout(_postcodeTimer);
+  _lookupPostcode();
+});
 
 /* ─── Datum schouw → Datum site survey sync ──────────────────────────────────── */
 document.getElementById('cover-datum')?.addEventListener('change', e => {
