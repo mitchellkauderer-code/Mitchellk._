@@ -4,3 +4,4 @@ uploads/*
 __pycache__/
 *.pyc
 saved_form.json
+saved_history.json

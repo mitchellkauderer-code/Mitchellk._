@@ -724,6 +724,7 @@ function schemaRemoveCol() {
 
 // Initial render
 renderSchemaGrid();
+loadHistory();
 
 /* ─── Entity label sync ──────────────────────────────────────────────────────── */
 function _syncEntityLabel() {
@@ -855,6 +856,78 @@ function loadFormJSON(input) {
   input.value = ''; // reset so same file can be loaded again
 }
 
+/* ─── Sidebar / History ──────────────────────────────────────────────────────── */
+
+let _activeHistoryId = null;
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+async function loadHistory() {
+  try {
+    const res = await fetch('/history');
+    if (!res.ok) return;
+    const entries = await res.json();
+    const list = document.getElementById('history-list');
+    if (!entries.length) {
+      list.innerHTML = '<p class="history-empty">Nog geen documenten.</p>';
+      return;
+    }
+    // Newest first (entries are stored oldest→newest, so reverse)
+    list.innerHTML = [...entries].reverse().map(e => `
+      <div class="history-entry${e.id === _activeHistoryId ? ' active' : ''}"
+           data-id="${e.id}" onclick="loadHistoryEntry('${e.id}')">
+        <span class="history-naam">${esc(e.naam)}</span>
+        <span class="history-datum">${esc(e.datum)}</span>
+        <button class="history-delete" onclick="deleteHistoryEntry('${e.id}',event)"
+                title="Verwijderen">✕</button>
+      </div>`).join('');
+  } catch { /* ignore */ }
+}
+
+async function loadHistoryEntry(id) {
+  try {
+    const res = await fetch(`/history/${id}`);
+    if (!res.ok) return;
+    const entry = await res.json();
+    restoreFormData(entry.formdata);
+    _activeHistoryId = id;
+    loadHistory(); // re-render to show active state
+    showMsg('success', `✓ "${esc(entry.naam)}" geladen`);
+  } catch (err) {
+    showMsg('error', '✗ Laden mislukt: ' + err.message);
+  }
+}
+
+async function deleteHistoryEntry(id, e) {
+  e.stopPropagation();
+  try {
+    await fetch(`/history/${id}`, { method: 'DELETE' });
+    if (_activeHistoryId === id) _activeHistoryId = null;
+    loadHistory();
+  } catch { /* ignore */ }
+}
+
+function nieuweDocument() {
+  _activeHistoryId = null;
+  restoreFormData({});
+  // Clear all photo slots
+  document.querySelectorAll('.photo-slot').forEach(slot => {
+    slot.classList.remove('has-image');
+    const preview = slot.querySelector('.thumb-preview');
+    if (preview) preview.innerHTML = '';
+    const ref = slot.querySelector('.photo-ref');
+    if (ref) ref.value = '';
+    if (slot._annotateBtn) slot._annotateBtn.style.display = 'none';
+  });
+  schemaState = { floors: ['KD','BG','1ste'], columns: 2, cells: {} };
+  schemaAnnotatedImage = null;
+  renderSchemaGrid();
+  loadHistory();
+  showMsg('success', '✓ Nieuw document gestart');
+}
+
 /* ─── Generate document ─────────────────────────────────────────────────────── */
 
 async function generateDocument() {
@@ -904,6 +977,15 @@ async function generateDocument() {
     URL.revokeObjectURL(url);
 
     showMsg('success', '✓ Document succesvol gegenereerd!');
+
+    // Refresh history sidebar and mark newest entry as active
+    _activeHistoryId = null;
+    await loadHistory();
+    const firstEntry = document.querySelector('#history-list .history-entry');
+    if (firstEntry) {
+      _activeHistoryId = firstEntry.dataset.id;
+      firstEntry.classList.add('active');
+    }
   } catch (err) {
     showMsg('error', '✗ Fout: ' + err.message);
   } finally {

@@ -2,6 +2,7 @@ import os
 import uuid
 import json
 import io
+from datetime import datetime
 from flask import Flask, request, jsonify, send_file, render_template, send_from_directory
 from docx import Document
 from docx.shared import Cm, Pt, RGBColor
@@ -13,6 +14,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageOps
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
 FORM_SAVE_PATH = os.path.join(BASE_DIR, 'saved_form.json')
+HISTORY_PATH   = os.path.join(BASE_DIR, 'saved_history.json')
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -138,6 +140,35 @@ def load_form():
     with open(FORM_SAVE_PATH, encoding='utf-8') as fh:
         return jsonify(json.load(fh))
 
+# ─── History helpers ───────────────────────────────────────────────────────────
+
+def _load_history():
+    if not os.path.exists(HISTORY_PATH):
+        return []
+    with open(HISTORY_PATH, encoding='utf-8') as fh:
+        return json.load(fh)
+
+def _save_history(entries):
+    with open(HISTORY_PATH, 'w', encoding='utf-8') as fh:
+        json.dump(entries, fh, ensure_ascii=False, indent=2)
+
+@app.route('/history')
+def get_history():
+    return jsonify([{k: v for k, v in e.items() if k != 'formdata'}
+                    for e in _load_history()])
+
+@app.route('/history/<entry_id>')
+def get_history_entry(entry_id):
+    for e in _load_history():
+        if e['id'] == entry_id:
+            return jsonify(e)
+    return jsonify({}), 404
+
+@app.route('/history/<entry_id>', methods=['DELETE'])
+def delete_history_entry(entry_id):
+    _save_history([e for e in _load_history() if e['id'] != entry_id])
+    return jsonify({'ok': True})
+
 @app.route('/generate', methods=['POST'])
 def generate():
     data = request.get_json()
@@ -147,6 +178,24 @@ def generate():
         doc.save(buf)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    # Save to history (non-fatal)
+    try:
+        naam = (data.get('cover', {}).get('straat_huisnrs', '') or '').strip()
+        if not naam:
+            naam = datetime.now().strftime('%Y-%m-%d %H:%M')
+        entry = {
+            'id':       str(uuid.uuid4()),
+            'naam':     naam,
+            'datum':    datetime.now().strftime('%Y-%m-%d %H:%M'),
+            'formdata': data,
+        }
+        entries = _load_history()
+        entries.append(entry)
+        if len(entries) > 50:
+            entries = entries[-50:]
+        _save_history(entries)
+    except Exception:
+        pass
     buf.seek(0)
     return send_file(
         buf,

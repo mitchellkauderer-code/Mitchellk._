@@ -8,6 +8,17 @@
 </head>
 <body>
 
+<button id="sidebar-toggle" onclick="toggleSidebar()" title="Productie">☰</button>
+
+<aside id="sidebar">
+  <div class="sidebar-header">
+    <span class="sidebar-title">Productie</span>
+    <button class="sidebar-close-btn" onclick="toggleSidebar()">✕</button>
+  </div>
+  <button class="btn-nieuw-doc" onclick="nieuweDocument()">+ Nieuw document</button>
+  <div id="history-list"><!-- populated by JS --></div>
+</aside>
+
 <div id="app">
   <header>
     <h1>Plaatsingsdocument Generator</h1>
