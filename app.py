@@ -4,6 +4,11 @@ import json
 import io
 from datetime import datetime
 from flask import Flask, request, jsonify, send_file, render_template, send_from_directory
+try:
+    import psycopg2
+    import psycopg2.extras
+except ImportError:
+    psycopg2 = None
 from docx import Document
 from docx.shared import Cm, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_BREAK
@@ -140,33 +145,120 @@ def load_form():
     with open(FORM_SAVE_PATH, encoding='utf-8') as fh:
         return jsonify(json.load(fh))
 
-# ─── History helpers ───────────────────────────────────────────────────────────
+# ─── History backend (Postgres when DATABASE_URL set, else JSON file) ──────────
 
-def _load_history():
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+def _use_db():
+    return bool(DATABASE_URL and psycopg2)
+
+def _db_conn():
+    url = DATABASE_URL
+    # Railway sometimes gives postgres:// but psycopg2 needs postgresql://
+    if url.startswith('postgres://'):
+        url = 'postgresql://' + url[len('postgres://'):]
+    return psycopg2.connect(url)
+
+def _ensure_table():
+    """Create the history table if it doesn't exist (called once at startup)."""
+    if not _use_db():
+        return
+    try:
+        with _db_conn() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS history (
+                        id      TEXT PRIMARY KEY,
+                        naam    TEXT,
+                        datum   TEXT,
+                        formdata TEXT
+                    )
+                """)
+            conn.commit()
+    except Exception as e:
+        print(f'[history] DB table init failed: {e}')
+
+_ensure_table()
+
+# ── JSON-file fallbacks (local dev) ───────────────────────────────────────────
+
+def _load_history_file():
     if not os.path.exists(HISTORY_PATH):
         return []
     with open(HISTORY_PATH, encoding='utf-8') as fh:
         return json.load(fh)
 
-def _save_history(entries):
+def _save_history_file(entries):
     with open(HISTORY_PATH, 'w', encoding='utf-8') as fh:
         json.dump(entries, fh, ensure_ascii=False, indent=2)
 
+# ── Public history API ─────────────────────────────────────────────────────────
+
+def _history_insert(entry_id, naam, datum, formdata_json):
+    if _use_db():
+        with _db_conn() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "INSERT INTO history (id, naam, datum, formdata) VALUES (%s, %s, %s, %s)",
+                    (entry_id, naam, datum, formdata_json)
+                )
+            conn.commit()
+    else:
+        entries = _load_history_file()
+        entries.append({
+            'id': entry_id, 'naam': naam, 'datum': datum,
+            'formdata': json.loads(formdata_json),
+        })
+        _save_history_file(entries)
+
 @app.route('/history')
 def get_history():
-    return jsonify([{k: v for k, v in e.items() if k != 'formdata'}
-                    for e in _load_history()])
+    if _use_db():
+        try:
+            with _db_conn() as conn:
+                with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                    cur.execute("SELECT id, naam, datum FROM history ORDER BY datum DESC")
+                    return jsonify(cur.fetchall())
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+    else:
+        return jsonify([{k: v for k, v in e.items() if k != 'formdata'}
+                        for e in reversed(_load_history_file())])
 
 @app.route('/history/<entry_id>')
 def get_history_entry(entry_id):
-    for e in _load_history():
-        if e['id'] == entry_id:
-            return jsonify(e)
-    return jsonify({}), 404
+    if _use_db():
+        try:
+            with _db_conn() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT id, naam, datum, formdata FROM history WHERE id = %s", (entry_id,))
+                    row = cur.fetchone()
+            if not row:
+                return jsonify({}), 404
+            return jsonify({
+                'id': row[0], 'naam': row[1], 'datum': row[2],
+                'formdata': json.loads(row[3]),
+            })
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+    else:
+        for e in _load_history_file():
+            if e['id'] == entry_id:
+                return jsonify(e)
+        return jsonify({}), 404
 
 @app.route('/history/<entry_id>', methods=['DELETE'])
 def delete_history_entry(entry_id):
-    _save_history([e for e in _load_history() if e['id'] != entry_id])
+    if _use_db():
+        try:
+            with _db_conn() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("DELETE FROM history WHERE id = %s", (entry_id,))
+                conn.commit()
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+    else:
+        _save_history_file([e for e in _load_history_file() if e['id'] != entry_id])
     return jsonify({'ok': True})
 
 @app.route('/generate', methods=['POST'])
@@ -183,17 +275,12 @@ def generate():
         naam = (data.get('cover', {}).get('straat_huisnrs', '') or '').strip()
         if not naam:
             naam = datetime.now().strftime('%Y-%m-%d %H:%M')
-        entry = {
-            'id':       str(uuid.uuid4()),
-            'naam':     naam,
-            'datum':    datetime.now().strftime('%Y-%m-%d %H:%M'),
-            'formdata': data,
-        }
-        entries = _load_history()
-        entries.append(entry)
-        if len(entries) > 50:
-            entries = entries[-50:]
-        _save_history(entries)
+        _history_insert(
+            entry_id=str(uuid.uuid4()),
+            naam=naam,
+            datum=datetime.now().strftime('%Y-%m-%d %H:%M'),
+            formdata_json=json.dumps(data, ensure_ascii=False),
+        )
     except Exception:
         pass
     buf.seek(0)

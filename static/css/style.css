@@ -563,6 +563,14 @@ textarea { resize: vertical; min-height: 70px; }
 }
 .btn-nieuw-doc:hover { background: #e3f0fb; }
 
+.sidebar-search { padding: 6px 10px 2px; flex-shrink: 0; }
+.sidebar-search input {
+  width: 100%; padding: 6px 8px; border: 1px solid #ccd3de;
+  border-radius: 4px; font-size: 12px; outline: none;
+  background: #fff; color: #1a1a2e;
+}
+.sidebar-search input:focus { border-color: #1565c0; }
+
 #history-list { flex: 1; overflow-y: auto; padding: 4px 0; }
 
 .history-entry {

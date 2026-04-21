@@ -859,31 +859,51 @@ function loadFormJSON(input) {
 /* ─── Sidebar / History ──────────────────────────────────────────────────────── */
 
 let _activeHistoryId = null;
+let _historyEntries  = [];   // cached list for client-side search
 
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('open');
+}
+
+function _renderHistoryList(entries) {
+  const list = document.getElementById('history-list');
+  if (!entries.length) {
+    list.innerHTML = '<p class="history-empty">Nog geen documenten.</p>';
+    return;
+  }
+  list.innerHTML = entries.map(e => `
+    <div class="history-entry${e.id === _activeHistoryId ? ' active' : ''}"
+         data-id="${e.id}" onclick="loadHistoryEntry('${e.id}')">
+      <span class="history-naam">${esc(e.naam)}</span>
+      <span class="history-datum">${esc(e.datum)}</span>
+      <button class="history-delete" onclick="deleteHistoryEntry('${e.id}',event)"
+              title="Verwijderen">✕</button>
+    </div>`).join('');
 }
 
 async function loadHistory() {
   try {
     const res = await fetch('/history');
     if (!res.ok) return;
-    const entries = await res.json();
-    const list = document.getElementById('history-list');
-    if (!entries.length) {
-      list.innerHTML = '<p class="history-empty">Nog geen documenten.</p>';
-      return;
-    }
-    // Newest first (entries are stored oldest→newest, so reverse)
-    list.innerHTML = [...entries].reverse().map(e => `
-      <div class="history-entry${e.id === _activeHistoryId ? ' active' : ''}"
-           data-id="${e.id}" onclick="loadHistoryEntry('${e.id}')">
-        <span class="history-naam">${esc(e.naam)}</span>
-        <span class="history-datum">${esc(e.datum)}</span>
-        <button class="history-delete" onclick="deleteHistoryEntry('${e.id}',event)"
-                title="Verwijderen">✕</button>
-      </div>`).join('');
+    // Server returns newest-first (DB: ORDER BY datum DESC; JSON: reversed)
+    _historyEntries = await res.json();
+    const q = (document.getElementById('history-search')?.value || '').trim();
+    filterHistory(q, /* skipFetch */ true);
   } catch { /* ignore */ }
+}
+
+function filterHistory(q, skipFetch) {
+  if (!skipFetch && !_historyEntries.length) { loadHistory(); return; }
+  const needle = q.trim().toLowerCase();
+  const filtered = needle
+    ? _historyEntries.filter(e => (e.naam || '').toLowerCase().includes(needle))
+    : _historyEntries;
+  const list = document.getElementById('history-list');
+  if (!filtered.length) {
+    list.innerHTML = `<p class="history-empty">${needle ? 'Geen resultaten gevonden.' : 'Nog geen documenten.'}</p>`;
+    return;
+  }
+  _renderHistoryList(filtered);
 }
 
 async function loadHistoryEntry(id) {

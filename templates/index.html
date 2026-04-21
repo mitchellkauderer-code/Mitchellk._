@@ -16,6 +16,10 @@
     <button class="sidebar-close-btn" onclick="toggleSidebar()">✕</button>
   </div>
   <button class="btn-nieuw-doc" onclick="nieuweDocument()">+ Nieuw document</button>
+  <div class="sidebar-search">
+    <input id="history-search" type="search" placeholder="Zoek op adres..."
+           oninput="filterHistory(this.value)" autocomplete="off">
+  </div>
   <div id="history-list"><!-- populated by JS --></div>
 </aside>
 
