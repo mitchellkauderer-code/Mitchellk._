@@ -860,6 +860,7 @@ function loadFormJSON(input) {
 
 let _currentDocId   = null;   // id of the document currently open in the form
 let _docEntries     = [];     // cached list for client-side search
+let _docsLoaded     = false;  // true once at least one successful fetch has completed
 
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('open');
@@ -885,15 +886,16 @@ async function loadDocuments() {
   try {
     const res = await fetch('/documents');
     if (!res.ok) return;
-    _docEntries = await res.json();   // newest-first from server
+    _docEntries  = await res.json();   // newest-first from server
+    _docsLoaded  = true;
     const q = (document.getElementById('history-search')?.value || '').trim();
-    filterHistory(q, /* skipFetch */ true);
+    _applyDocFilter(q);
   } catch { /* ignore */ }
 }
 
-function filterHistory(q, skipFetch) {
-  if (!skipFetch && !_docEntries.length) { loadDocuments(); return; }
-  const needle = q.trim().toLowerCase();
+// Filters the cached list — never triggers a new fetch
+function _applyDocFilter(q) {
+  const needle   = (q || '').trim().toLowerCase();
   const filtered = needle
     ? _docEntries.filter(e => (e.adres || '').toLowerCase().includes(needle))
     : _docEntries;
@@ -905,6 +907,12 @@ function filterHistory(q, skipFetch) {
   _renderDocList(filtered);
 }
 
+// Called from the search input oninput="filterHistory(this.value)"
+function filterHistory(q) {
+  if (!_docsLoaded) { loadDocuments(); return; }   // first call before page-load fetch finished
+  _applyDocFilter(q);
+}
+
 async function openDocument(id) {
   try {
     const res = await fetch(`/documents/${id}`);
@@ -912,7 +920,7 @@ async function openDocument(id) {
     const doc = await res.json();
     restoreFormData(doc.data);
     _currentDocId = id;
-    loadDocuments();   // re-render to show active state
+    await loadDocuments();   // re-render to show active state
     showMsg('success', `✓ "${esc(doc.adres)}" geopend`);
   } catch (err) {
     showMsg('error', '✗ Openen mislukt: ' + err.message);
@@ -924,7 +932,7 @@ async function deleteDocument(id, e) {
   try {
     await fetch(`/documents/${id}`, { method: 'DELETE' });
     if (_currentDocId === id) _currentDocId = null;
-    loadDocuments();
+    await loadDocuments();
   } catch { /* ignore */ }
 }
 
@@ -936,7 +944,7 @@ async function saveDocument() {
     const adres = (formData.cover?.straat_huisnrs || '').trim();
 
     if (_currentDocId) {
-      // Update existing
+      // Update existing document in Postgres
       const res = await fetch(`/documents/${_currentDocId}`, {
         method:  'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -945,7 +953,7 @@ async function saveDocument() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       showMsg('success', '✓ Document opgeslagen');
     } else {
-      // Create new
+      // Create new document in Postgres
       const res = await fetch('/documents', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -964,7 +972,22 @@ async function saveDocument() {
   }
 }
 
-function nieuweDocument() {
+async function nieuweDocument() {
+  // If the current form has never been saved and has content, ask first
+  if (!_currentDocId) {
+    const heeftAdres = (document.getElementById('cover-straat')?.value || '').trim();
+    if (heeftAdres) {
+      const opslaan = confirm(
+        'Het huidige document is nog niet opgeslagen.\n\nWil je het opslaan voordat je een nieuw document start?'
+      );
+      if (opslaan) {
+        await saveDocument();
+        // saveDocument() may have failed — proceed anyway
+      }
+    }
+  }
+  // If _currentDocId was set, the doc is already safe in Postgres — nothing to do
+
   _currentDocId = null;
   restoreFormData({});
   // Clear all photo slots
@@ -979,7 +1002,7 @@ function nieuweDocument() {
   schemaState = { floors: ['KD','BG','1ste'], columns: 2, cells: {} };
   schemaAnnotatedImage = null;
   renderSchemaGrid();
-  loadDocuments();
+  await loadDocuments();   // re-fetch so all saved docs appear (active highlight cleared)
   showMsg('success', '✓ Nieuw document gestart');
 }
 
