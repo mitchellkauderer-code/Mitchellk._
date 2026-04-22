@@ -936,9 +936,9 @@ async function deleteDocument(id, e) {
   } catch { /* ignore */ }
 }
 
-async function saveDocument() {
+async function saveDocument({ silent = false } = {}) {
   const btn = document.getElementById('btn-save-db');
-  btn.disabled = true;
+  if (!silent) btn.disabled = true;
   try {
     const formData = collectFormData();
     const adres = (formData.cover?.straat_huisnrs || '').trim();
@@ -951,7 +951,6 @@ async function saveDocument() {
         body:    JSON.stringify({ adres, data: formData }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      showMsg('success', '✓ Document opgeslagen');
     } else {
       // Create new document in Postgres
       const res = await fetch('/documents', {
@@ -962,13 +961,14 @@ async function saveDocument() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const created = await res.json();
       _currentDocId = created.id;
-      showMsg('success', '✓ Document opgeslagen');
     }
+    if (!silent) showMsg('success', '✓ Document opgeslagen');
     await loadDocuments();
   } catch (err) {
-    showMsg('error', '✗ Opslaan mislukt: ' + err.message);
+    if (!silent) showMsg('error', '✗ Opslaan mislukt: ' + err.message);
+    // silent failures are swallowed — auto-save should never block generation
   } finally {
-    btn.disabled = false;
+    if (!silent) btn.disabled = false;
   }
 }
 
@@ -981,8 +981,8 @@ async function nieuweDocument() {
         'Het huidige document is nog niet opgeslagen.\n\nWil je het opslaan voordat je een nieuw document start?'
       );
       if (opslaan) {
-        await saveDocument();
-        // saveDocument() may have failed — proceed anyway
+        await saveDocument();   // explicit save — shows toast + disables button normally
+        // proceed regardless of whether save succeeded
       }
     }
   }
@@ -1012,6 +1012,9 @@ async function generateDocument() {
   const btn = document.getElementById('btn-generate');
   btn.disabled = true;
   showMsg('loading', '⏳ Document wordt aangemaakt...');
+
+  // Auto-save form to Postgres before generating (silent — no toast, no button state)
+  await saveDocument({ silent: true });
 
   try {
     // Step 1: get schema image (annotated version if saved, otherwise generate fresh)
