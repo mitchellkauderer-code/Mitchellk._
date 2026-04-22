@@ -517,9 +517,12 @@
   <!-- Action bar -->
   <div id="action-bar">
     <div class="action-left">
+      <button type="button" id="btn-save-db" class="btn-save" onclick="saveDocument()">
+        💾 Opslaan
+      </button>
       <div class="json-buttons">
         <button type="button" id="btn-save-json" class="btn-secondary" onclick="saveFormJSON()">
-          💾 Opslaan als JSON
+          Exporteer JSON
         </button>
         <button type="button" id="btn-load-json" class="btn-secondary" onclick="document.getElementById('file-json-input').click()">
           📂 Laden van JSON

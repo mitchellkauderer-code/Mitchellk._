@@ -261,6 +261,157 @@ def delete_history_entry(entry_id):
         _save_history_file([e for e in _load_history_file() if e['id'] != entry_id])
     return jsonify({'ok': True})
 
+# ─── Documents (explicitly saved form data, editable) ─────────────────────────
+
+DOCUMENTS_SAVE_PATH = os.path.join(BASE_DIR, 'saved_documents.json')
+
+def _ensure_documents_table():
+    if not _use_db():
+        return
+    try:
+        with _db_conn() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS documents (
+                        id               TEXT PRIMARY KEY,
+                        adres            TEXT,
+                        datum_aangemaakt TEXT,
+                        datum_aangepast  TEXT,
+                        data             TEXT
+                    )
+                """)
+            conn.commit()
+    except Exception as e:
+        print(f'[documents] DB table init failed: {e}')
+
+_ensure_documents_table()
+
+def _load_documents_file():
+    if not os.path.exists(DOCUMENTS_SAVE_PATH):
+        return []
+    with open(DOCUMENTS_SAVE_PATH, encoding='utf-8') as fh:
+        return json.load(fh)
+
+def _save_documents_file(docs):
+    with open(DOCUMENTS_SAVE_PATH, 'w', encoding='utf-8') as fh:
+        json.dump(docs, fh, ensure_ascii=False, indent=2)
+
+@app.route('/documents')
+def list_documents():
+    if _use_db():
+        try:
+            with _db_conn() as conn:
+                with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                    cur.execute(
+                        "SELECT id, adres, datum_aangemaakt, datum_aangepast "
+                        "FROM documents ORDER BY datum_aangepast DESC"
+                    )
+                    return jsonify(cur.fetchall())
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+    else:
+        return jsonify([
+            {k: v for k, v in d.items() if k != 'data'}
+            for d in reversed(_load_documents_file())
+        ])
+
+@app.route('/documents/<doc_id>')
+def get_document(doc_id):
+    if _use_db():
+        try:
+            with _db_conn() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "SELECT id, adres, datum_aangemaakt, datum_aangepast, data "
+                        "FROM documents WHERE id = %s", (doc_id,)
+                    )
+                    row = cur.fetchone()
+            if not row:
+                return jsonify({}), 404
+            return jsonify({
+                'id': row[0], 'adres': row[1],
+                'datum_aangemaakt': row[2], 'datum_aangepast': row[3],
+                'data': json.loads(row[4]),
+            })
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+    else:
+        for d in _load_documents_file():
+            if d['id'] == doc_id:
+                return jsonify(d)
+        return jsonify({}), 404
+
+@app.route('/documents', methods=['POST'])
+def create_document():
+    body     = request.get_json()
+    adres    = (body.get('adres') or '').strip() or datetime.now().strftime('%Y-%m-%d %H:%M')
+    now      = datetime.now().strftime('%Y-%m-%d %H:%M')
+    doc_id   = str(uuid.uuid4())
+    data_str = json.dumps(body.get('data', {}), ensure_ascii=False)
+    if _use_db():
+        try:
+            with _db_conn() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "INSERT INTO documents (id, adres, datum_aangemaakt, datum_aangepast, data) "
+                        "VALUES (%s, %s, %s, %s, %s)",
+                        (doc_id, adres, now, now, data_str)
+                    )
+                conn.commit()
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+    else:
+        docs = _load_documents_file()
+        docs.append({
+            'id': doc_id, 'adres': adres,
+            'datum_aangemaakt': now, 'datum_aangepast': now,
+            'data': body.get('data', {}),
+        })
+        _save_documents_file(docs)
+    return jsonify({'id': doc_id, 'adres': adres, 'datum_aangemaakt': now, 'datum_aangepast': now})
+
+@app.route('/documents/<doc_id>', methods=['PUT'])
+def update_document(doc_id):
+    body     = request.get_json()
+    adres    = (body.get('adres') or '').strip() or datetime.now().strftime('%Y-%m-%d %H:%M')
+    now      = datetime.now().strftime('%Y-%m-%d %H:%M')
+    data_str = json.dumps(body.get('data', {}), ensure_ascii=False)
+    if _use_db():
+        try:
+            with _db_conn() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "UPDATE documents SET adres=%s, datum_aangepast=%s, data=%s WHERE id=%s",
+                        (adres, now, data_str, doc_id)
+                    )
+                conn.commit()
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+    else:
+        docs = _load_documents_file()
+        for d in docs:
+            if d['id'] == doc_id:
+                d['adres'] = adres
+                d['datum_aangepast'] = now
+                d['data'] = body.get('data', {})
+                break
+        _save_documents_file(docs)
+    return jsonify({'id': doc_id, 'adres': adres, 'datum_aangepast': now})
+
+@app.route('/documents/<doc_id>', methods=['DELETE'])
+def delete_document(doc_id):
+    if _use_db():
+        try:
+            with _db_conn() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("DELETE FROM documents WHERE id = %s", (doc_id,))
+                conn.commit()
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+    else:
+        _save_documents_file([d for d in _load_documents_file() if d['id'] != doc_id])
+    return jsonify({'ok': True})
+
 @app.route('/generate', methods=['POST'])
 def generate():
     data = request.get_json()

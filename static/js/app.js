@@ -724,7 +724,7 @@ function schemaRemoveCol() {
 
 // Initial render
 renderSchemaGrid();
-loadHistory();
+loadDocuments();
 
 /* ─── Entity label sync ──────────────────────────────────────────────────────── */
 function _syncEntityLabel() {
@@ -856,81 +856,116 @@ function loadFormJSON(input) {
   input.value = ''; // reset so same file can be loaded again
 }
 
-/* ─── Sidebar / History ──────────────────────────────────────────────────────── */
+/* ─── Sidebar / Documents ────────────────────────────────────────────────────── */
 
-let _activeHistoryId = null;
-let _historyEntries  = [];   // cached list for client-side search
+let _currentDocId   = null;   // id of the document currently open in the form
+let _docEntries     = [];     // cached list for client-side search
 
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('open');
 }
 
-function _renderHistoryList(entries) {
+function _renderDocList(entries) {
   const list = document.getElementById('history-list');
   if (!entries.length) {
     list.innerHTML = '<p class="history-empty">Nog geen documenten.</p>';
     return;
   }
   list.innerHTML = entries.map(e => `
-    <div class="history-entry${e.id === _activeHistoryId ? ' active' : ''}"
-         data-id="${e.id}" onclick="loadHistoryEntry('${e.id}')">
-      <span class="history-naam">${esc(e.naam)}</span>
-      <span class="history-datum">${esc(e.datum)}</span>
-      <button class="history-delete" onclick="deleteHistoryEntry('${e.id}',event)"
+    <div class="history-entry${e.id === _currentDocId ? ' active' : ''}"
+         data-id="${e.id}" onclick="openDocument('${e.id}')">
+      <span class="history-naam">${esc(e.adres)}</span>
+      <span class="history-datum">${esc(e.datum_aangepast)}</span>
+      <button class="history-delete" onclick="deleteDocument('${e.id}',event)"
               title="Verwijderen">✕</button>
     </div>`).join('');
 }
 
-async function loadHistory() {
+async function loadDocuments() {
   try {
-    const res = await fetch('/history');
+    const res = await fetch('/documents');
     if (!res.ok) return;
-    // Server returns newest-first (DB: ORDER BY datum DESC; JSON: reversed)
-    _historyEntries = await res.json();
+    _docEntries = await res.json();   // newest-first from server
     const q = (document.getElementById('history-search')?.value || '').trim();
     filterHistory(q, /* skipFetch */ true);
   } catch { /* ignore */ }
 }
 
 function filterHistory(q, skipFetch) {
-  if (!skipFetch && !_historyEntries.length) { loadHistory(); return; }
+  if (!skipFetch && !_docEntries.length) { loadDocuments(); return; }
   const needle = q.trim().toLowerCase();
   const filtered = needle
-    ? _historyEntries.filter(e => (e.naam || '').toLowerCase().includes(needle))
-    : _historyEntries;
+    ? _docEntries.filter(e => (e.adres || '').toLowerCase().includes(needle))
+    : _docEntries;
   const list = document.getElementById('history-list');
   if (!filtered.length) {
     list.innerHTML = `<p class="history-empty">${needle ? 'Geen resultaten gevonden.' : 'Nog geen documenten.'}</p>`;
     return;
   }
-  _renderHistoryList(filtered);
+  _renderDocList(filtered);
 }
 
-async function loadHistoryEntry(id) {
+async function openDocument(id) {
   try {
-    const res = await fetch(`/history/${id}`);
+    const res = await fetch(`/documents/${id}`);
     if (!res.ok) return;
-    const entry = await res.json();
-    restoreFormData(entry.formdata);
-    _activeHistoryId = id;
-    loadHistory(); // re-render to show active state
-    showMsg('success', `✓ "${esc(entry.naam)}" geladen`);
+    const doc = await res.json();
+    restoreFormData(doc.data);
+    _currentDocId = id;
+    loadDocuments();   // re-render to show active state
+    showMsg('success', `✓ "${esc(doc.adres)}" geopend`);
   } catch (err) {
-    showMsg('error', '✗ Laden mislukt: ' + err.message);
+    showMsg('error', '✗ Openen mislukt: ' + err.message);
   }
 }
 
-async function deleteHistoryEntry(id, e) {
+async function deleteDocument(id, e) {
   e.stopPropagation();
   try {
-    await fetch(`/history/${id}`, { method: 'DELETE' });
-    if (_activeHistoryId === id) _activeHistoryId = null;
-    loadHistory();
+    await fetch(`/documents/${id}`, { method: 'DELETE' });
+    if (_currentDocId === id) _currentDocId = null;
+    loadDocuments();
   } catch { /* ignore */ }
 }
 
+async function saveDocument() {
+  const btn = document.getElementById('btn-save-db');
+  btn.disabled = true;
+  try {
+    const formData = collectFormData();
+    const adres = (formData.cover?.straat_huisnrs || '').trim();
+
+    if (_currentDocId) {
+      // Update existing
+      const res = await fetch(`/documents/${_currentDocId}`, {
+        method:  'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ adres, data: formData }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      showMsg('success', '✓ Document opgeslagen');
+    } else {
+      // Create new
+      const res = await fetch('/documents', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ adres, data: formData }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const created = await res.json();
+      _currentDocId = created.id;
+      showMsg('success', '✓ Document opgeslagen');
+    }
+    await loadDocuments();
+  } catch (err) {
+    showMsg('error', '✗ Opslaan mislukt: ' + err.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 function nieuweDocument() {
-  _activeHistoryId = null;
+  _currentDocId = null;
   restoreFormData({});
   // Clear all photo slots
   document.querySelectorAll('.photo-slot').forEach(slot => {
@@ -944,7 +979,7 @@ function nieuweDocument() {
   schemaState = { floors: ['KD','BG','1ste'], columns: 2, cells: {} };
   schemaAnnotatedImage = null;
   renderSchemaGrid();
-  loadHistory();
+  loadDocuments();
   showMsg('success', '✓ Nieuw document gestart');
 }
 
@@ -997,15 +1032,6 @@ async function generateDocument() {
     URL.revokeObjectURL(url);
 
     showMsg('success', '✓ Document succesvol gegenereerd!');
-
-    // Refresh history sidebar and mark newest entry as active
-    _activeHistoryId = null;
-    await loadHistory();
-    const firstEntry = document.querySelector('#history-list .history-entry');
-    if (firstEntry) {
-      _activeHistoryId = firstEntry.dataset.id;
-      firstEntry.classList.add('active');
-    }
   } catch (err) {
     showMsg('error', '✗ Fout: ' + err.message);
   } finally {
