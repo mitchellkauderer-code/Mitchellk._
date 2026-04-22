@@ -12,8 +12,7 @@ body {
 
 /* ─── App shell ─────────────────────────────────────────────────────────────── */
 #app {
-  max-width: 960px;
-  margin: 0 auto;
+  min-width: 0;   /* allow flex children to shrink */
 }
 
 header {
