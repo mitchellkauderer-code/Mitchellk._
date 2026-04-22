@@ -858,9 +858,17 @@ function loadFormJSON(input) {
 
 /* ─── Sidebar / Documents ────────────────────────────────────────────────────── */
 
-let _currentDocId   = null;   // id of the document currently open in the form
+// Persist _currentDocId in sessionStorage so page reloads don't force a new POST
+let _currentDocId   = sessionStorage.getItem('_docId') || null;
 let _docEntries     = [];     // cached list for client-side search
 let _docsLoaded     = false;  // true once at least one successful fetch has completed
+
+function _setDocId(id) {
+  _currentDocId = id;
+  if (id) sessionStorage.setItem('_docId', id);
+  else    sessionStorage.removeItem('_docId');
+  console.log('[doc] _currentDocId =', id);
+}
 
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('open');
@@ -885,12 +893,13 @@ function _renderDocList(entries) {
 async function loadDocuments() {
   try {
     const res = await fetch('/documents');
-    if (!res.ok) return;
+    if (!res.ok) { console.warn('[loadDocuments] fetch failed', res.status); return; }
     _docEntries  = await res.json();   // newest-first from server
     _docsLoaded  = true;
+    console.log('[loadDocuments]', _docEntries.length, 'document(s), _currentDocId=', _currentDocId);
     const q = (document.getElementById('history-search')?.value || '').trim();
     _applyDocFilter(q);
-  } catch { /* ignore */ }
+  } catch (err) { console.error('[loadDocuments] error:', err); }
 }
 
 // Filters the cached list — never triggers a new fetch
@@ -919,7 +928,7 @@ async function openDocument(id) {
     if (!res.ok) return;
     const doc = await res.json();
     restoreFormData(doc.data);
-    _currentDocId = id;
+    _setDocId(id);
     await loadDocuments();   // re-render to show active state
     showMsg('success', `✓ "${esc(doc.adres)}" geopend`);
   } catch (err) {
@@ -931,7 +940,7 @@ async function deleteDocument(id, e) {
   e.stopPropagation();
   try {
     await fetch(`/documents/${id}`, { method: 'DELETE' });
-    if (_currentDocId === id) _currentDocId = null;
+    if (_currentDocId === id) _setDocId(null);
     await loadDocuments();
   } catch { /* ignore */ }
 }
@@ -944,27 +953,33 @@ async function saveDocument({ silent = false } = {}) {
     const adres = (formData.cover?.straat_huisnrs || '').trim();
 
     if (_currentDocId) {
-      // Update existing document in Postgres
+      // PUT — update existing document
+      console.log('[saveDocument] PUT id=', _currentDocId, 'adres=', adres);
       const res = await fetch(`/documents/${_currentDocId}`, {
         method:  'PUT',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ adres, data: formData }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(`PUT HTTP ${res.status}`);
+      console.log('[saveDocument] PUT ok');
     } else {
-      // Create new document in Postgres
+      // POST — create new document
+      console.log('[saveDocument] POST adres=', adres);
       const res = await fetch('/documents', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ adres, data: formData }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(`POST HTTP ${res.status}`);
       const created = await res.json();
-      _currentDocId = created.id;
+      if (!created?.id) throw new Error('POST response missing id');
+      _setDocId(created.id);
+      console.log('[saveDocument] POST created id=', created.id);
     }
     if (!silent) showMsg('success', '✓ Document opgeslagen');
     await loadDocuments();
   } catch (err) {
+    console.error('[saveDocument] error:', err.message);
     if (!silent) showMsg('error', '✗ Opslaan mislukt: ' + err.message);
     // silent failures are swallowed — auto-save should never block generation
   } finally {
@@ -988,7 +1003,7 @@ async function nieuweDocument() {
   }
   // If _currentDocId was set, the doc is already safe in Postgres — nothing to do
 
-  _currentDocId = null;
+  _setDocId(null);
   restoreFormData({});
   // Clear all photo slots
   document.querySelectorAll('.photo-slot').forEach(slot => {
